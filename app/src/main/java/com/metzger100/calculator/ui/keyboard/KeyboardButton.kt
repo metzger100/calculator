@@ -1,5 +1,4 @@
-
-package com.metzger100.calculator.features.calculator.ui
+package com.metzger100.calculator.ui.keyboard
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,13 +15,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.metzger100.calculator.R
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import com.metzger100.calculator.util.FeedbackManager
 
 /**
@@ -52,19 +51,19 @@ object KeyboardButtonStyle {
 @Composable
 fun KeyboardButton(
     label: String,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.Companion,
     fontSize: TextUnit = 24.sp,
     onClick: () -> Unit
 ) {
     val highlighted = KeyboardButtonStyle.isHighlighted(label)
     val faded       = KeyboardButtonStyle.isFaded(label)
 
-    val feedbackManager = FeedbackManager.rememberFeedbackManager()
+    val feedbackManager = FeedbackManager.Companion.rememberFeedbackManager()
     val view = LocalView.current
 
     val buttonColor = when {
         highlighted -> MaterialTheme.colorScheme.primary
-        faded       -> Color.Gray
+        faded       -> Color.Companion.Gray
         else        -> MaterialTheme.colorScheme.surfaceVariant
     }
     val textColor = if (highlighted)
@@ -87,8 +86,8 @@ fun KeyboardButton(
         shape = MaterialTheme.shapes.medium
     ) {
         Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
+            contentAlignment = Alignment.Companion.Center,
+            modifier = Modifier.Companion.fillMaxSize()
         ) {
             when (label) {
                 "←" -> Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = "Backspace")

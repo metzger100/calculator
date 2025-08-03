@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.metzger100.calculator.ui.keyboard.KeyboardButton
 
 @Composable
 fun ScientificKeyboard(
@@ -52,13 +53,13 @@ fun ScientificKeyboard(
                             modifier = Modifier.weight(1f),
                             onClick = {
                                 when (label) {
-                                    "INV"          -> onToggleInverse()
-                                    "deg","rad"   -> onToggleDegreeMode()
-                                    "C"            -> onClear()
-                                    "←"            -> onBack()
-                                    "="            -> onEquals()
-                                    "⇄"            -> onToggleMode()
-                                    else           -> onInput(mapScientificSymbol(label, isDegreeMode))
+                                    "INV" -> onToggleInverse()
+                                    "deg", "rad" -> onToggleDegreeMode()
+                                    "C" -> onClear()
+                                    "←" -> onBack()
+                                    "=" -> onEquals()
+                                    "⇄" -> onToggleMode()
+                                    else -> onInput(mapScientificSymbol(label, isDegreeMode))
                                 }
                             }
                         )

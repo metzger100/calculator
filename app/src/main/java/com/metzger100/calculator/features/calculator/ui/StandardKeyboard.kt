@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.metzger100.calculator.ui.keyboard.KeyboardButton
 
 @Composable
 fun StandardKeyboard(
@@ -52,10 +53,10 @@ fun StandardKeyboard(
                             modifier = buttonModifier,
                             onClick = {
                                 when (label) {
-                                    "C"  -> onClear()
-                                    "←"  -> onBack()
-                                    "="  -> onEquals()
-                                    "⇄"  -> onToggleMode()
+                                    "C" -> onClear()
+                                    "←" -> onBack()
+                                    "=" -> onEquals()
+                                    "⇄" -> onToggleMode()
                                     else -> onInput(mapSymbol(label))
                                 }
                             }
