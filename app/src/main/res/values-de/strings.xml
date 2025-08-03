@@ -27,6 +27,14 @@
 	<string name="change_unit_content_description">Ändere Einheit %1$s</string>
 	<string name="select_currency_content_description">Wähle Währung %1$s</string>
 	<string name="change_currency_content_description">Ändere Währung %1$s</string>
+	<string name="TopAppBar_Haptics">Haptik</string>
+	<string name="TopAppBar_Sound">Sound</string>
+	<string name="Settings_Title">Einstellungen</string>
+	<string name="Settings_ThemeTitle">Theme</string>
+	<string name="Settings_ThemeSystem">System folgen</string>
+	<string name="Settings_ThemeLight">Hell</string>
+	<string name="Settings_ThemeDark">Dunkel</string>
+	<string name="TopAppBar_Settings">Einstellungen</string>
 
 	<!-- Calculator keyboard button contentDescriptions (German) -->
 	<string name="key_clear">Löschen</string>

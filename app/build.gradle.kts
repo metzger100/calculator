@@ -51,6 +51,7 @@ dependencies {
     implementation(libs.navigation.compose)
     implementation(libs.splitties.views.recyclerview)
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.androidx.datastore.preferences)
     //evalex
     implementation(libs.evalex)
     implementation(libs.evalex.big.math)

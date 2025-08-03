@@ -29,6 +29,12 @@
     <string name="change_currency_content_description">Change currency %1$s</string>
     <string name="TopAppBar_Haptics">Haptics</string>
     <string name="TopAppBar_Sound">Sound</string>
+    <string name="Settings_Title">Settings</string>
+    <string name="Settings_ThemeTitle">Theme</string>
+    <string name="Settings_ThemeSystem">Follow system</string>
+    <string name="Settings_ThemeLight">Light</string>
+    <string name="Settings_ThemeDark">Dark</string>
+    <string name="TopAppBar_Settings">Settings</string>
 
     <!-- Calculator keyboard button contentDescriptions -->
     <string name="key_clear">Clear</string>

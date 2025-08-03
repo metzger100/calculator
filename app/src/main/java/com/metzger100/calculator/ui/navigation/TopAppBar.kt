@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -23,10 +24,12 @@ import com.metzger100.calculator.util.FeedbackManager
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopAppBar(
+    title: String,
     showBackButton: Boolean,
     onBackClick: () -> Unit,
     onClearHistory: () -> Unit,
-    onRefreshRates: () -> Unit
+    onRefreshRates: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     val feedbackManager = FeedbackManager.rememberFeedbackManager()
     val view = LocalView.current
@@ -49,11 +52,7 @@ fun TopAppBar(
                 Spacer(modifier = Modifier.width(48.dp))
             }
         },
-        title = {
-            Text(
-                text = stringResource(R.string.TopAppBar_Title)
-            )
-        },
+        title = { Text(title) },
         actions = {
             IconButton(onClick = {
                 feedbackManager.provideFeedback(view)
@@ -93,6 +92,20 @@ fun TopAppBar(
                         Icon(
                             imageVector = Icons.Default.Refresh,
                             contentDescription = stringResource(R.string.TopAppBar_RefreshRates)
+                        )
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.TopAppBar_Settings)) },
+                    onClick = {
+                        feedbackManager.provideFeedback(view)
+                        onOpenSettings()
+                        menuExpanded = false
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.TopAppBar_Settings)
                         )
                     }
                 )

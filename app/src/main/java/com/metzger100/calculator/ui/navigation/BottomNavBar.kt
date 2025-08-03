@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.metzger100.calculator.util.FeedbackManager
 
@@ -21,7 +22,6 @@ fun BottomNavBar(navController: NavController) {
         items.forEach { item ->
             val labelText = stringResource(id = item.labelRes)
 
-            // Wenn die Route "units" enthält, markiere den Tab als selektiert
             val isSelected = when {
                 currentRoute == item.route -> true
                 item == NavItem.Units && currentRoute?.startsWith("unit/") == true -> true
@@ -33,10 +33,15 @@ fun BottomNavBar(navController: NavController) {
                 onClick = {
                     feedbackManager.provideFeedback(view)
                     if (currentRoute != item.route) {
+                        /* 🔑  Pop “settings” if it’s anywhere in the stack  */
+                        navController.popBackStack("settings", inclusive = true)
+
                         navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true                 // keep state of other tabs
+                            }
                             launchSingleTop = true
-                            restoreState = true
+                            restoreState   = true
                         }
                     }
                 },

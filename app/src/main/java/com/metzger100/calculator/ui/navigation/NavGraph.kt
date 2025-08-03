@@ -13,6 +13,8 @@ import com.metzger100.calculator.features.calculator.ui.CalculatorScreen
 import com.metzger100.calculator.features.calculator.viewmodel.CalculatorViewModel
 import com.metzger100.calculator.features.currency.ui.CurrencyConverterScreen
 import com.metzger100.calculator.features.currency.viewmodel.CurrencyViewModel
+import com.metzger100.calculator.features.settings.ui.SettingsScreen
+import com.metzger100.calculator.features.settings.viewmodel.SettingsViewModel
 import com.metzger100.calculator.features.unit.ui.UnitConverterOverviewScreen
 import com.metzger100.calculator.features.unit.ui.UnitConverterScreen
 import com.metzger100.calculator.features.unit.viewmodel.UnitConverterViewModel
@@ -55,6 +57,12 @@ fun NavGraph(
                 viewModel = unitViewModel,
                 snackbarHostState = snackbarHostState,
                 coroutineScope = scope
+            )
+        }
+        composable("settings") {
+            val vm: SettingsViewModel = hiltViewModel()
+            SettingsScreen(
+                viewModel = vm
             )
         }
     }

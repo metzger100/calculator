@@ -1,4 +1,3 @@
-// ui/theme/Theme.kt
 package com.metzger100.calculator.ui.theme
 
 import android.os.Build
@@ -9,9 +8,16 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun CalculatorTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: ThemeMode = ThemeMode.SYSTEM,
     content: @Composable () -> Unit
 ) {
+    val systemDark = isSystemInDarkTheme()
+    val darkTheme  = when (themeMode) {
+        ThemeMode.SYSTEM -> systemDark
+        ThemeMode.DARK   -> true
+        ThemeMode.LIGHT  -> false
+    }
+
     val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colorScheme = when {
         dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current)
@@ -23,6 +29,6 @@ fun CalculatorTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = AppTypography,
-        content = content
+        content    = content
     )
 }

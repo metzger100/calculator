@@ -2,6 +2,10 @@ package com.metzger100.calculator.di.module
 
 import android.app.Application
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.metzger100.calculator.data.ConnectivityObserver
 import com.metzger100.calculator.data.repository.CalculationRepository
@@ -11,7 +15,9 @@ import com.metzger100.calculator.data.local.dao.CurrencyListDao
 import com.metzger100.calculator.data.local.dao.CurrencyPrefsDao
 import com.metzger100.calculator.data.local.dao.CurrencyRateDao
 import com.metzger100.calculator.data.local.database.MIGRATION_1_2
+import com.metzger100.calculator.data.repository.SettingsRepository
 import com.metzger100.calculator.di.IoDispatcher
+import com.metzger100.calculator.di.SettingsDataStore
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -74,4 +80,20 @@ object AppModule {
     fun provideConnectivityObserver(
         @ApplicationContext context: Context
     ): ConnectivityObserver = ConnectivityObserver(context)
+
+    @Provides
+    @Singleton
+    @SettingsDataStore
+    fun provideSettingsDataStore(
+        @ApplicationContext ctx: Context
+    ): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create(
+            produceFile = { ctx.preferencesDataStoreFile("user_settings") }
+        )
+
+    @Provides
+    @Singleton
+    fun provideSettingsRepository(
+        @SettingsDataStore ds: DataStore<Preferences>
+    ) = SettingsRepository(ds)
 }
