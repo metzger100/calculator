@@ -22,6 +22,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel
 ) {
     val mode by viewModel.themeMode.collectAsState()
+    val openKeyboard by viewModel.openKeyboardOnStart.collectAsState()
+    val scientific by viewModel.scientificOnStart.collectAsState()
 
     Column(
         modifier = Modifier
@@ -33,9 +35,7 @@ fun SettingsScreen(
             text   = stringResource(R.string.Settings_ThemeTitle),
             style  = MaterialTheme.typography.titleMedium
         )
-
         Spacer(Modifier.height(8.dp))
-
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
             colors   = CardDefaults.elevatedCardColors(
@@ -72,5 +72,53 @@ fun SettingsScreen(
                 }
             }
         }
+
+        Spacer(Modifier.height(24.dp))
+        Text(
+            text   = stringResource(R.string.Settings_BehaviorOptions),
+            style  = MaterialTheme.typography.titleMedium
+        )
+        Spacer(Modifier.height(8.dp))
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth(),
+            colors   = CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column {
+                SettingSwitchRow(
+                    checked = openKeyboard,
+                    title = stringResource(R.string.Settings_OpenKeyboard),
+                    onCheckedChange = viewModel::onOpenKeyboardOnStartChange
+                )
+                HorizontalDivider(thickness = 0.6.dp, color = DividerDefaults.color)
+                SettingSwitchRow(
+                    checked = scientific,
+                    title = stringResource(R.string.Settings_ScientificDefault),
+                    onCheckedChange = viewModel::onScientificOnStartChange
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingSwitchRow(
+    checked: Boolean,
+    title: String,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(title, style = MaterialTheme.typography.bodyLarge)
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange
+        )
     }
 }

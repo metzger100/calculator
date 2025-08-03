@@ -8,7 +8,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-
 import com.metzger100.calculator.features.calculator.ui.CalculatorScreen
 import com.metzger100.calculator.features.calculator.viewmodel.CalculatorViewModel
 import com.metzger100.calculator.features.currency.ui.CurrencyConverterScreen
@@ -26,14 +25,18 @@ fun NavGraph(
     calculatorViewModel: CalculatorViewModel,
     currencyViewModel: CurrencyViewModel,
     snackbarHostState: SnackbarHostState,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    openKeyboardOnStart: Boolean,
+    scientificOnStart: Boolean
 ) {
     NavHost(navController, startDestination = NavItem.Calculator.route) {
         composable(NavItem.Calculator.route) {
             CalculatorScreen(
                 viewModel = calculatorViewModel,
                 snackbarHostState = snackbarHostState,
-                coroutineScope = scope
+                coroutineScope = scope,
+                openKeyboardOnStart = openKeyboardOnStart,
+                scientificOnStart = scientificOnStart
             )
         }
         composable(NavItem.Currency.route) {

@@ -35,6 +35,10 @@
     <string name="Settings_ThemeLight">Light</string>
     <string name="Settings_ThemeDark">Dark</string>
     <string name="TopAppBar_Settings">Settings</string>
+    <string name="Settings_BehaviorOptions">Behavior</string>
+    <string name="Settings_OpenKeyboard">Open keyboard on app launch</string>
+    <string name="Settings_ScientificDefault">Open scientific keyboard by default</string>
+
 
     <!-- Calculator keyboard button contentDescriptions -->
     <string name="key_clear">Clear</string>

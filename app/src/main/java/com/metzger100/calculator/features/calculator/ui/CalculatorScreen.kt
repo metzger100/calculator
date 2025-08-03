@@ -57,12 +57,30 @@ import kotlinx.coroutines.launch
 fun CalculatorScreen(
     viewModel: CalculatorViewModel = hiltViewModel(),
     snackbarHostState: SnackbarHostState,
-    coroutineScope: CoroutineScope
+    coroutineScope: CoroutineScope,
+    openKeyboardOnStart: Boolean = false,
+    scientificOnStart: Boolean = false
 ) {
     val feedbackManager = FeedbackManager.rememberFeedbackManager()
     val view = LocalView.current
 
+    var modeInitialized by remember { mutableStateOf(false) }
     var keyboardVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(scientificOnStart, viewModel, modeInitialized) {
+        if (!modeInitialized) {
+            if (scientificOnStart && viewModel.uiState.mode != CalculatorMode.SCIENTIFIC) {
+                viewModel.toggleMode()
+            }
+            modeInitialized = true
+        }
+    }
+
+    LaunchedEffect(openKeyboardOnStart) {
+        if (openKeyboardOnStart) {
+            keyboardVisible = true
+        }
+    }
     val uiState by viewModel::uiState
 
     var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }

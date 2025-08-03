@@ -19,6 +19,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -46,19 +47,30 @@ class MainApplication : Application()
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        val splash = installSplashScreen()
+        var settingsLoaded = false
+        splash.setKeepOnScreenCondition { !settingsLoaded }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppContent()
+            settingsLoaded = AppContent()
         }
     }
 }
 
 @Composable
-fun AppContent() {
+fun AppContent(): Boolean {
     val settingsVM: SettingsViewModel = hiltViewModel()
-    val themeMode by settingsVM.themeMode.collectAsState()
+    val appSettings by settingsVM.appSettings.collectAsState()
+
+    if (appSettings == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {}
+        return false
+    }
+    // Now everything is loaded, unpack values:
+    val themeMode = appSettings!!.themeMode
+    val openKeyboard = appSettings!!.openKeyboardOnStart
+    val scientific = appSettings!!.scientificOnStart
 
     CalculatorTheme (themeMode = themeMode) {
         val navController = rememberNavController()
@@ -139,9 +151,12 @@ fun AppContent() {
                     calculatorViewModel = CalcViewModel,
                     currencyViewModel = CurViewModel,
                     snackbarHostState = snackbarHostState,
-                    scope = scope
+                    scope = scope,
+                    openKeyboardOnStart = openKeyboard,
+                    scientificOnStart = scientific
                 )
             }
         }
     }
+    return true
 }

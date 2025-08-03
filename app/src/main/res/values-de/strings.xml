@@ -35,6 +35,9 @@
 	<string name="Settings_ThemeLight">Hell</string>
 	<string name="Settings_ThemeDark">Dunkel</string>
 	<string name="TopAppBar_Settings">Einstellungen</string>
+	<string name="Settings_BehaviorOptions">Verhalten</string>
+	<string name="Settings_OpenKeyboard">Tastatur beim Start der App öffnen</string>
+	<string name="Settings_ScientificDefault">Wissenschaftliche Tastatur standardmäßig öffnen</string>
 
 	<!-- Calculator keyboard button contentDescriptions (German) -->
 	<string name="key_clear">Löschen</string>
