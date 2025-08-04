@@ -18,9 +18,11 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -33,12 +35,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.metzger100.calculator.R
+import com.metzger100.calculator.data.local.entity.CurrencyHistoryEntity
 import com.metzger100.calculator.features.currency.viewmodel.CurrencyViewModel
 import com.metzger100.calculator.features.currency.ui.CurrencyConverterConstants.MajorCurrencyCodes
 import com.metzger100.calculator.util.FeedbackManager
+import com.metzger100.calculator.util.format.NumberFormatService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -106,11 +111,12 @@ fun CurrencyConverterScreen(
             .padding(16.dp)
     ) {
         val keyboardHeight = maxHeight * 0.5f
+        val infoHeight = 48.dp
 
         Column(
             Modifier
                 .fillMaxSize()
-                .padding(bottom = keyboardHeight)
+                .padding(bottom = keyboardHeight + infoHeight)
         ) {
             if (rates.isEmpty()) {
                 Text(
@@ -150,6 +156,35 @@ fun CurrencyConverterScreen(
                 feedbackManager   = feedbackManager,
                 view              = view
             )
+            Spacer(Modifier.height(8.dp))
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clipToBounds()
+            ) {
+                val context = LocalContext.current
+                val textColor   = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+                val resultColor = MaterialTheme.colorScheme.primary.toArgb()
+
+                AndroidView(
+                    factory = {
+                        RecyclerView(context).apply {
+                            layoutManager =
+                                LinearLayoutManager(context, LinearLayoutManager.VERTICAL, true)
+                            adapter = CurrencyHistoryAdapter(viewModel.numberFormatService, textColor, resultColor)
+                            clipToPadding = true
+                            clipChildren = true
+                        }
+                    },
+                    update = { rv ->
+                        val adapter = rv.adapter as CurrencyHistoryAdapter
+                        adapter.updateData(viewModel.currencyHistory)     // newest list
+                        if (viewModel.currencyHistory.isNotEmpty()) rv.scrollToPosition(0)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
         ExchangeRateInfo(
@@ -174,6 +209,30 @@ fun CurrencyConverterScreen(
                 onBack = {
                     val current = if (uiState.selectedField == 1) uiState.value1 else uiState.value2
                     if (current.isNotEmpty()) viewModel.onValueChange(current.dropLast(1))
+                },
+                onEquals = {
+                    // Only log to history if both values are filled and not zero
+                    val amountFrom: String
+                    val currencyFrom: String
+                    val amountTo: String
+                    val currencyTo: String
+                    if (uiState.selectedField == 1) {
+                        amountFrom = uiState.value1
+                        currencyFrom = uiState.currency1
+                        amountTo = uiState.value2
+                        currencyTo = uiState.currency2
+                    } else {
+                        amountFrom = uiState.value2
+                        currencyFrom = uiState.currency2
+                        amountTo = uiState.value1
+                        currencyTo = uiState.currency1
+                    }
+                    if (amountFrom.isNotBlank() && amountTo.isNotBlank() && amountFrom != "0" && amountTo != "0") {
+                        coroutineScope.launch {
+                            viewModel.addToHistory(amountFrom, currencyFrom, amountTo, currencyTo)
+                        }
+                    }
+                    viewModel.onValueChange("")
                 }
             )
         }
@@ -408,5 +467,80 @@ fun CurrencySelectorDialogRV(
         }
     }
 }
+
+private class CurrencyHistoryAdapter(
+    private val nfs: NumberFormatService,
+    private val textColor: Int,
+    private val resultColor: Int
+) : RecyclerView.Adapter<CurrencyHistoryViewHolder>() {
+
+    private var items: List<CurrencyHistoryEntity> = emptyList()
+
+    fun updateData(newItems: List<CurrencyHistoryEntity>) {
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize() = items.size
+            override fun getNewListSize() = newItems.size
+            override fun areItemsTheSame(o: Int, n: Int) = items[o].id == newItems[n].id
+            override fun areContentsTheSame(o: Int, n: Int) = items[o] == newItems[n]
+        })
+        items = newItems
+        diff.dispatchUpdatesTo(this)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CurrencyHistoryViewHolder {
+        val ctx = parent.context
+        val ll = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 12, 16, 12)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        val timeTv = TextView(ctx).apply {
+            textSize = 12f
+            setTextColor(textColor)
+        }
+        val lineTv = TextView(ctx).apply {
+            textSize = 16f
+            setTextColor(textColor)
+        }
+        ll.addView(timeTv)
+        ll.addView(lineTv)
+        return CurrencyHistoryViewHolder(ll, timeTv, lineTv)
+    }
+
+    override fun getItemCount() = items.size
+
+    override fun onBindViewHolder(holder: CurrencyHistoryViewHolder, position: Int) {
+        val e = items[position]
+
+        // ─ timestamp – unchanged
+        val ts = Instant.ofEpochMilli(e.timestamp)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+        holder.timeTv.setTextColor(textColor)
+        holder.timeTv.text = ts
+
+        // ─ decide “short mode” from the *input* (amountFrom)
+        val shortMode = runCatching {
+            BigDecimal(e.amountFrom).stripTrailingZeros().scale() <= 2
+        }.getOrDefault(true)
+
+        val fromFmt = nfs.formatNumber(e.amountFrom, shortMode, inputLine = false)
+        val toFmt   = nfs.formatNumber(e.amountTo  , shortMode, inputLine = false)
+
+        holder.lineTv.setTextColor(resultColor)          // same blue as calculator
+        holder.lineTv.text = "${e.currencyFrom}: $fromFmt  →  " +
+                "${e.currencyTo}: $toFmt"
+    }
+}
+
+private class CurrencyHistoryViewHolder(
+    view: View,
+    val timeTv: TextView,
+    val lineTv: TextView
+) : RecyclerView.ViewHolder(view)
 
 private class CurrencyViewHolder(view: View) : RecyclerView.ViewHolder(view)

@@ -11,10 +11,12 @@ import com.metzger100.calculator.data.ConnectivityObserver
 import com.metzger100.calculator.data.repository.CalculationRepository
 import com.metzger100.calculator.data.local.database.CalculatorDatabase
 import com.metzger100.calculator.data.local.dao.CalculationDao
+import com.metzger100.calculator.data.local.dao.CurrencyHistoryDao
 import com.metzger100.calculator.data.local.dao.CurrencyListDao
 import com.metzger100.calculator.data.local.dao.CurrencyPrefsDao
 import com.metzger100.calculator.data.local.dao.CurrencyRateDao
 import com.metzger100.calculator.data.local.database.MIGRATION_1_2
+import com.metzger100.calculator.data.local.database.MIGRATION_2_3
 import com.metzger100.calculator.data.repository.SettingsRepository
 import com.metzger100.calculator.di.IoDispatcher
 import com.metzger100.calculator.di.SettingsDataStore
@@ -42,6 +44,7 @@ object AppModule {
             "calculator.db"
         )
             .addMigrations(MIGRATION_1_2)
+            .addMigrations(MIGRATION_2_3)
             .build()
     }
 
@@ -62,6 +65,10 @@ object AppModule {
     @Provides
     fun provideCurrencyListDao(db: CalculatorDatabase): CurrencyListDao =
         db.currencyListDao()
+
+    @Provides
+    fun provideCurrencyHistoryDao(db: CalculatorDatabase): CurrencyHistoryDao =
+        db.currencyHistoryDao()
 
     @IoDispatcher
     @Provides

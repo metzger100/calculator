@@ -8,7 +8,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.metzger100.calculator.data.ConnectivityObserver
+import com.metzger100.calculator.data.local.entity.CurrencyHistoryEntity
 import com.metzger100.calculator.data.local.entity.CurrencyPrefsEntity
+import com.metzger100.calculator.data.repository.CurrencyHistoryRepository
 import com.metzger100.calculator.data.repository.CurrencyRepository
 import com.metzger100.calculator.util.format.NumberFormatService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -42,8 +44,9 @@ data class CurrencyUiState(
 @SuppressLint("DefaultLocale")
 class CurrencyViewModel @Inject constructor(
     private val repo: CurrencyRepository,
-    private val numberFormatService: NumberFormatService,
-    private val connectivityObserver: ConnectivityObserver
+    val numberFormatService: NumberFormatService,
+    private val connectivityObserver: ConnectivityObserver,
+    private val currencyHistoryRepo: CurrencyHistoryRepository,
 ) : ViewModel() {
 
     companion object {
@@ -230,5 +233,35 @@ class CurrencyViewModel @Inject constructor(
                 .stripTrailingZeros()
                 .toPlainString()
         }.getOrDefault("0")
+    }
+
+    var currencyHistory by mutableStateOf<List<CurrencyHistoryEntity>>(emptyList())
+        private set
+
+    init {
+        loadHistory()
+    }
+
+    fun loadHistory() {
+        viewModelScope.launch {
+            currencyHistory = currencyHistoryRepo.getHistory()
+        }
+    }
+
+    suspend fun addToHistory(
+        amountFrom: String, currencyFrom: String,
+        amountTo: String, currencyTo: String
+    ) {
+        currencyHistoryRepo.insert(
+            amountFrom, currencyFrom, amountTo, currencyTo, System.currentTimeMillis()
+        )
+        loadHistory()
+    }
+
+    fun clearCurrencyHistory() {
+        viewModelScope.launch {
+            currencyHistoryRepo.clearHistory()
+            loadHistory()
+        }
     }
 }
