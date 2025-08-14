@@ -40,7 +40,6 @@ import com.metzger100.calculator.features.unit.ui.UnitConverterConstants.UnitDef
 import com.metzger100.calculator.util.FeedbackManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.math.BigDecimal
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -409,13 +408,8 @@ private class UnitHistoryAdapter(
             .toLocalDateTime()
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
 
-        // short-mode rule: derive from *input* (fromValue)
-        val shortMode = runCatching {
-            BigDecimal(e.fromValue).stripTrailingZeros().scale() <= 2
-        }.getOrDefault(true)
-
-        val fromFmt = format(e.fromValue, shortMode)
-        val toFmt   = format(e.toValue,   shortMode)
+        val fromFmt = format(e.fromValue, false)
+        val toFmt   = format(e.toValue,   false)
 
         holder.lineTv.text = "${e.fromUnit}: $fromFmt  →  ${e.toUnit}: $toFmt"
     }
