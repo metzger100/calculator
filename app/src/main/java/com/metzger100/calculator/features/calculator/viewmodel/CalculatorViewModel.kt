@@ -31,7 +31,9 @@ private val ATOMIC_FUNCTION_TOKENS = setOf(
     "SQRT(", "LOG(", "LOG10(", "EXP(",
     "RECIPROCAL(", "FACT(",
     // Constants
-    "PI()", "E()"
+    "PI()", "E()",
+    // last-answer variable
+    "ANS"
 )
 
 private const val MAX_FACTORIAL = 100
@@ -62,6 +64,8 @@ class CalculatorViewModel @Inject constructor(
     var forceRefresh by mutableStateOf(false)
         private set
 
+    private var lastResult: String? = null
+
     init {
         loadHistory()
     }
@@ -75,39 +79,6 @@ class CalculatorViewModel @Inject constructor(
         shortMode: Boolean,
         inputLine: Boolean
     ): String = numberFormatService.formatNumber(input, shortMode, inputLine)
-
-    fun tokenizeInput(input: String): List<String> {
-        if (input.isBlank()) return emptyList()
-        val tokens = mutableListOf<String>()
-        var i = 0
-        val atomic = ATOMIC_FUNCTION_TOKENS.sortedByDescending { it.length }
-
-        while (i < input.length) {
-            val match = atomic.firstOrNull { input.startsWith(it, i) }
-            if (match != null) {
-                tokens.add(match)
-                i += match.length
-                continue
-            }
-            val c = input[i]
-            if (c.isDigit() || c == '.') {
-                val start = i
-                var dotFound = (c == '.')
-                i++
-                while (i < input.length &&
-                    (input[i].isDigit() || (!dotFound && input[i] == '.'))
-                ) {
-                    if (input[i] == '.') dotFound = true
-                    i++
-                }
-                tokens.add(input.substring(start, i))
-            } else {
-                tokens.add(c.toString())
-                i++
-            }
-        }
-        return tokens
-    }
 
     fun onCursorChange(requestedPos: Int) {
         val trimmedPos = requestedPos.coerceIn(0, uiState.input.length)
@@ -199,26 +170,35 @@ class CalculatorViewModel @Inject constructor(
 
     // Insert token at cursor, splitting tokens if needed
     fun onInput(token: String) {
-        val newTokens = uiState.tokens.toMutableList()
-        val pos = uiState.cursor
+        // Start from either the current tokens/cursor or an "ANS" seed if we were showing the bare result.
+        var workingTokens = uiState.tokens.toMutableList()
+        var pos = uiState.cursor
+
+        if (isShowingBareLastResult()) {
+            workingTokens = mutableListOf("ANS")
+            if (needsImplicitMultiplication(token)) {
+                workingTokens.add("*")
+            }
+            pos = workingTokens.joinToString("").length
+        }
+
+        // ---- existing insertion logic, but using workingTokens/pos instead of uiState ----
+        val newTokens = workingTokens.toMutableList()
         var charCount = 0
         var inserted = false
 
-        for ((i, tok) in uiState.tokens.withIndex()) {
+        for ((i, tok) in workingTokens.withIndex()) {
             val start = charCount
             val end = charCount + tok.length
             if (pos <= end) {
-                // inside or at end of this token
                 val within = pos - start
                 if (within in 1 until tok.length) {
-                    // split token
                     val left = tok.substring(0, within)
                     val right = tok.substring(within)
                     newTokens[i] = left
                     newTokens.add(i + 1, token)
                     newTokens.add(i + 2, right)
                 } else {
-                    // at boundary: either at start or end
                     val insertIdx = if (within == 0) i else i + 1
                     newTokens.add(insertIdx, token)
                 }
@@ -254,6 +234,7 @@ class CalculatorViewModel @Inject constructor(
             if (uiState.cursor <= end) {
                 val within = uiState.cursor - start
                 if (tok in ATOMIC_FUNCTION_TOKENS) {
+                    if (tok == "ANS") lastResult = null
                     newTokens.removeAt(i)
                     newCursor = start
                 } else if (tok.length > 1) {
@@ -287,6 +268,7 @@ class CalculatorViewModel @Inject constructor(
 
 
     fun clear() {
+        lastResult = null
         uiState = uiState.copy(tokens = emptyList(), cursor = 0, input = "", preview = "")
     }
 
@@ -306,20 +288,45 @@ class CalculatorViewModel @Inject constructor(
                 return
             }
             val config = buildConfig()
-            val expr = BigMathExpression(uiState.input, config)
+            val ansBefore = lastResult // for history rendering
+            val expandedInput = expandAns(uiState.input)
+
+            val expr = BigMathExpression(expandedInput, config)
             val result = expr.evaluate().numberValue
             if (result != null) {
                 val resultStr = BigDecimal(result.toString()).stripTrailingZeros().toPlainString()
+
+                // history should show the concrete expression (ANS replaced with its value at time of eval)
+                val historyInput =
+                    if (uiState.input.contains("ANS")) uiState.input.replace("ANS", ansBefore ?: "0")
+                    else uiState.input
+
                 viewModelScope.launch {
-                    repository.insert(uiState.input, resultStr)
+                    repository.insert(historyInput, resultStr)
                     history = repository.getHistory()
                 }
-                uiState = uiState.copy(
-                    tokens = listOf(resultStr),
-                    cursor = resultStr.length,
-                    input = resultStr,
-                    preview = ""
-                )
+
+                lastResult = resultStr
+
+                val containsAns = uiState.tokens.any { it == "ANS" } || uiState.input.contains("ANS")
+
+                if (containsAns) {
+                    // Keep the ANS expression in the input to iterate on '='
+                    // Always show preview when ANS is present.
+                    uiState = uiState.copy(
+                        // keep tokens & input as-is
+                        preview = resultStr
+                    )
+                } else {
+                    // Legacy behavior: replace input with the numeric result
+                    uiState = uiState.copy(
+                        tokens = listOf(resultStr),
+                        cursor = resultStr.length,
+                        input = resultStr,
+                        preview = ""
+                    )
+                }
+
                 Log.d("CalculatorViewModel", "Result: $resultStr")
             } else {
                 uiState = uiState.copy(tokens = listOf("0"), cursor = 1, input = "0", preview = "")
@@ -337,13 +344,32 @@ class CalculatorViewModel @Inject constructor(
         }
         return try {
             val config = buildConfig()
-            val expr = BigMathExpression(input, config)
+            val expr = BigMathExpression(expandAns(input), config)
             expr.evaluate().numberValue
                 ?.toString()
                 ?.let { formatResult(it) } ?: ""
         } catch (e: Exception) {
             application.getString(R.string.Calculator_Error)
         }
+    }
+
+    // replace ANS with the last result when evaluating/validating
+    private fun expandAns(src: String): String =
+        if (lastResult != null) src.replace("ANS", lastResult!!) else src
+
+    // true when the input is exactly the last result as a single token
+    private fun isShowingBareLastResult(): Boolean =
+        lastResult != null &&
+                uiState.tokens.size == 1 &&
+                uiState.tokens[0] == lastResult
+
+    // when typing right after converting to ANS, decide if we need an implicit '*'
+    private fun needsImplicitMultiplication(nextToken: String): Boolean {
+        val first = nextToken.firstOrNull()
+        return (first != null && (first.isDigit() || first == '.')) ||
+                nextToken == "ANS" ||
+                nextToken == "(" ||
+                nextToken in ATOMIC_FUNCTION_TOKENS // covers SIN(, PI(), etc.
     }
 
     /** Baut die EvalEx‑Konfiguration mit gewünschter Genauigkeit und Standard‑Funktionen. */
@@ -359,32 +385,33 @@ class CalculatorViewModel @Inject constructor(
         val tag = "CalculatorViewModel"
         Log.d(tag, "validateExpression: checking input=\"$input\"")
 
+        val expanded = expandAns(input)   // NEW
         val config = buildConfig()
 
-        if (input.trim() == "0^0") {
+        if (expanded.trim() == "0^0") {
             Log.w(tag, "Invalid: 0^0 is undefined")
             return false
         }
 
-        if (!validateFactorials(input, config)) {
+        if (!validateFactorials(expanded, config)) {
             Log.w(tag, "Invalid: factorial validation failed")
             return false
         }
 
-        if (!validateTanDomain(input, config, isDeg)) {
+        if (!validateTanDomain(expanded, config, isDeg)) {
             Log.w(tag, "Invalid: tangent domain validation failed")
             return false
         }
 
-        if (!validateUnaryDomain(input, "SQRT", BigDecimal.ZERO, allowEqual = true, config)) {
+        if (!validateUnaryDomain(expanded, "SQRT", BigDecimal.ZERO, allowEqual = true, config)) {
             Log.w(tag, "Invalid: square root domain validation failed")
             return false
         }
-        if (!validateUnaryDomain(input, "LOG", BigDecimal.ZERO, allowEqual = false, config)) {
+        if (!validateUnaryDomain(expanded, "LOG", BigDecimal.ZERO, allowEqual = false, config)) {
             Log.w(tag, "Invalid: LOG argument must be greater than 0")
             return false
         }
-        if (!validateUnaryDomain(input, "LOG10", BigDecimal.ZERO, allowEqual = false, config)) {
+        if (!validateUnaryDomain(expanded, "LOG10", BigDecimal.ZERO, allowEqual = false, config)) {
             Log.w(tag, "Invalid: LOG10 argument must be greater than 0")
             return false
         }
