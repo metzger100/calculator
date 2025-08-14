@@ -306,19 +306,17 @@ class CalculatorViewModel @Inject constructor(
                     history = repository.getHistory()
                 }
 
-                lastResult = resultStr
-
                 val containsAns = uiState.tokens.any { it == "ANS" } || uiState.input.contains("ANS")
 
                 if (containsAns) {
-                    // Keep the ANS expression in the input to iterate on '='
-                    // Always show preview when ANS is present.
+                    lastResult = resultStr
+                    val nextPreview = updatePreviewResults(uiState.input)
+
                     uiState = uiState.copy(
-                        // keep tokens & input as-is
-                        preview = resultStr
+                        preview = nextPreview
                     )
                 } else {
-                    // Legacy behavior: replace input with the numeric result
+                    lastResult = resultStr
                     uiState = uiState.copy(
                         tokens = listOf(resultStr),
                         cursor = resultStr.length,
