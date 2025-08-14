@@ -27,9 +27,10 @@ fun NavGraph(
     snackbarHostState: SnackbarHostState,
     scope: CoroutineScope,
     openKeyboardOnStart: Boolean,
-    scientificOnStart: Boolean
+    scientificOnStart: Boolean,
+    startDestination: String? = "calculator"
 ) {
-    NavHost(navController, startDestination = NavItem.Calculator.route) {
+    NavHost(navController, startDestination = startDestination ?: "calculator") {
         composable(NavItem.Calculator.route) {
             CalculatorScreen(
                 viewModel = calculatorViewModel,
@@ -37,6 +38,15 @@ fun NavGraph(
                 coroutineScope = scope,
                 openKeyboardOnStart = openKeyboardOnStart,
                 scientificOnStart = scientificOnStart
+            )
+        }
+        composable("calculator_scientific") {
+            CalculatorScreen(
+                viewModel = calculatorViewModel,
+                snackbarHostState = snackbarHostState,
+                coroutineScope = scope,
+                openKeyboardOnStart = openKeyboardOnStart,
+                scientificOnStart = true
             )
         }
         composable(NavItem.Currency.route) {

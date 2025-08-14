@@ -52,14 +52,32 @@ class MainActivity : ComponentActivity() {
         splash.setKeepOnScreenCondition { !settingsLoaded }
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        // Determine which screen to launch
+        val dataUri = intent?.data?.toString()
+        val startRoute = when (intent?.data?.toString()) {
+            "app://calculator/standard"    -> "calculator"
+            "app://calculator/scientific"  -> "calculator_scientific"
+            "app://calculator/currency"    -> "currency"
+            "app://calculator/units"       -> "units"
+            else -> null
+        }
+        val forceOpenKeyboard = when (dataUri) {
+            "app://calculator/standard", "app://calculator/scientific" -> true
+            else -> false
+        }
+
         setContent {
-            settingsLoaded = AppContent()
+            settingsLoaded = AppContent(startRoute, forceOpenKeyboard)
         }
     }
 }
 
 @Composable
-fun AppContent(): Boolean {
+fun AppContent(
+    startRoute: String? = null,
+    forceOpenKeyboard: Boolean = false
+): Boolean {
     val settingsVM: SettingsViewModel = hiltViewModel()
     val appSettings by settingsVM.appSettings.collectAsState()
 
@@ -69,7 +87,7 @@ fun AppContent(): Boolean {
     }
     // Now everything is loaded, unpack values:
     val themeMode = appSettings!!.themeMode
-    val openKeyboard = appSettings!!.openKeyboardOnStart
+    val openKeyboard = forceOpenKeyboard || appSettings!!.openKeyboardOnStart
     val scientific = appSettings!!.scientificOnStart
 
     CalculatorTheme (themeMode = themeMode) {
@@ -153,7 +171,8 @@ fun AppContent(): Boolean {
                     snackbarHostState = snackbarHostState,
                     scope = scope,
                     openKeyboardOnStart = openKeyboard,
-                    scientificOnStart = scientific
+                    scientificOnStart = scientific,
+                    startDestination = startRoute
                 )
             }
         }

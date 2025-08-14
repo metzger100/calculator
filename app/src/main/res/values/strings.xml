@@ -38,7 +38,14 @@
     <string name="Settings_BehaviorOptions">Behavior</string>
     <string name="Settings_OpenKeyboard">Open keyboard on app launch</string>
     <string name="Settings_ScientificDefault">Open scientific keyboard by default</string>
-
+    <string name="shortcut_standard">Standard Calculator</string>
+    <string name="shortcut_standard_long">Open Standard Calculator</string>
+    <string name="shortcut_scientific">Scientific Calculator</string>
+    <string name="shortcut_scientific_long">Open Scientific Calculator</string>
+    <string name="shortcut_currency">Currency Converter</string>
+    <string name="shortcut_currency_long">Open Currency Converter</string>
+    <string name="shortcut_units">Unit Converter</string>
+    <string name="shortcut_units_long">Open Unit Converter</string>
 
     <!-- Calculator keyboard button contentDescriptions -->
     <string name="key_clear">Clear</string>

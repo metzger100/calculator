@@ -38,6 +38,14 @@
 	<string name="Settings_BehaviorOptions">Verhalten</string>
 	<string name="Settings_OpenKeyboard">Tastatur beim Start der App öffnen</string>
 	<string name="Settings_ScientificDefault">Wissenschaftliche Tastatur standardmäßig öffnen</string>
+	<string name="shortcut_standard">Standardrechner</string>
+	<string name="shortcut_standard_long">Standardrechner öffnen</string>
+	<string name="shortcut_scientific">Wissenschaftlicher Rechner</string>
+	<string name="shortcut_scientific_long">Wissenschaftlicher Rechner öffnen</string>
+	<string name="shortcut_currency">Währungsrechner</string>
+	<string name="shortcut_currency_long">Währungsrechner öffnen</string>
+	<string name="shortcut_units">Einheitenrechner</string>
+	<string name="shortcut_units_long">Einheitenrechner öffnen</string>
 
 	<!-- Calculator keyboard button contentDescriptions (German) -->
 	<string name="key_clear">Löschen</string>

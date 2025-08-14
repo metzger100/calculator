@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <shortcut
+        android:shortcutId="calculator_standard"
+        android:enabled="true"
+        android:icon="@mipmap/ic_logo"
+        android:shortcutShortLabel="@string/shortcut_standard"
+        android:shortcutLongLabel="@string/shortcut_standard_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.metzger100.calculator"
+            android:targetClass="com.metzger100.calculator.MainActivity"
+            android:data="app://calculator/standard" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="calculator_scientific"
+        android:enabled="true"
+        android:icon="@mipmap/ic_logo"
+        android:shortcutShortLabel="@string/shortcut_scientific"
+        android:shortcutLongLabel="@string/shortcut_scientific_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.metzger100.calculator"
+            android:targetClass="com.metzger100.calculator.MainActivity"
+            android:data="app://calculator/scientific" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="currency_converter"
+        android:enabled="true"
+        android:icon="@mipmap/ic_logo"
+        android:shortcutShortLabel="@string/shortcut_currency"
+        android:shortcutLongLabel="@string/shortcut_currency_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.metzger100.calculator"
+            android:targetClass="com.metzger100.calculator.MainActivity"
+            android:data="app://calculator/currency" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="unit_converter"
+        android:enabled="true"
+        android:icon="@mipmap/ic_logo"
+        android:shortcutShortLabel="@string/shortcut_units"
+        android:shortcutLongLabel="@string/shortcut_units_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.metzger100.calculator"
+            android:targetClass="com.metzger100.calculator.MainActivity"
+            android:data="app://calculator/units" />
+    </shortcut>
+</shortcuts>
