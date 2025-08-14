@@ -91,11 +91,13 @@ com.metzger100.calculator
 │   ├── local                   # Room entities & DAOs
 │   │   ├── dao                 # Contains all DAOs
 │   │   │   ├── CalculationDao.kt
+│   │   │   ├── CurrencyHistoryDao.kt
 │   │   │   ├── CurrencyListDao.kt
 │   │   │   ├── CurrencyPrefsDao.kt
 │   │   │   └── CurrencyRateDao.kt
 │   │   ├── entity              # Room entities
 │   │   │   ├── CalculationEntity.kt
+│   │   │   ├── CurrencyHistoryEntity.kt
 │   │   │   ├── CurrencyListEntity.kt
 │   │   │   ├── CurrencyPrefsEntity.kt
 │   │   │   └── CurrencyRateEntity.kt
@@ -103,6 +105,7 @@ com.metzger100.calculator
 │   │       └── CalculatorDatabase.kt
 │   ├── repository              # Repository classes handling data sources
 │   │   ├── CalculatorRepository.kt
+│   │   ├── CurrencyHistoryRepository.kt
 │   │   └── CurrencyRepository.kt
 │   └── ConnectivityObserver.kt
 │
@@ -129,14 +132,19 @@ com.metzger100.calculator
 │   │   │   └── CurrencyConverterConstants.kt    # Constants for Available Currencies in Converter UI
 │   │   └── viewmodel           # ViewModel for the Currency Converter
 │   │       └── CurrencyViewModel.kt
-│   └── unit                    # Unit Converter feature
-│       ├── ui                  # UI components for Unit Converter
-│       │   ├── UnitConverterOverviewScreen.kt
-│       │   ├── UnitConverterScreen.kt
-│       │   ├── UnitConverterKeyboard.kt
-│       │   └── UnitConverterConstants.kt  # Constants for Unit Converter UI
-│       └── viewmodel           # ViewModel for the Unit Converter feature
-│           └── UnitConverterViewModel.kt
+│   ├── unit                    # Unit Converter feature
+│   │   ├── ui                  # UI components for Unit Converter
+│   │   │   ├── UnitConverterOverviewScreen.kt
+│   │   │   ├── UnitConverterScreen.kt
+│   │   │   ├── UnitConverterKeyboard.kt
+│   │   │   └── UnitConverterConstants.kt  # Constants for Unit Converter UI
+│   │   └── viewmodel           # ViewModel for the Unit Converter feature
+│   │       └── UnitConverterViewModel.kt
+│   └── settings                               # ➊ NEW
+│       ├── ui
+│       │   └── SettingsScreen.kt
+│       └── viewmodel
+│           └── SettingsViewModel.kt
 │
 ├── ui                          # UI components and Navigation setup
 │   ├── navigation              # Navigation (NavGraph, BottomNavBar, etc.)
@@ -149,6 +157,7 @@ com.metzger100.calculator
 │       └── Type.kt             # Font definitions and typography setup
 │
 ├── util
+│   ├── FeedbackManager.kt      # Util Class für haptic Feedback
 │   └── format
 │       ├── NumberFormatModule.kt  # Module for the service class
 │       └── NumberFormatService.kt # Service for readable numbers
