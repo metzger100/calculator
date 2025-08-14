@@ -1,3 +1,4 @@
+// com.metzger100.calculator.features.unit.ui.UnitConverterKeyboard.kt
 package com.metzger100.calculator.features.unit.ui
 
 import androidx.compose.foundation.clickable
@@ -21,14 +22,15 @@ fun UnitConverterKeyboard(
     modifier: Modifier = Modifier,
     onInput: (String) -> Unit,
     onClear: () -> Unit,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onEquals: () -> Unit
 ) {
     val buttonSpacing = 6.dp
     val buttons = listOf(
         listOf("7", "8", "9", "C"),
-        listOf("4", "5", "6", ""),
+        listOf("4", "5", "6", "←"),
         listOf("1", "2", "3", ""),
-        listOf("00", "0", ".", "←")
+        listOf("00", "0", ".", "=")
     )
 
     Box(
@@ -55,6 +57,7 @@ fun UnitConverterKeyboard(
                                 when (label) {
                                     "C" -> onClear()
                                     "←" -> onBack()
+                                    "=" -> onEquals()
                                     else -> onInput(label)
                                 }
                             }

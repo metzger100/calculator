@@ -1,3 +1,4 @@
+// com.metzger100.calculator.features.unit.viewmodel.UnitConverterViewModel.kt
 package com.metzger100.calculator.features.unit.viewmodel
 
 import androidx.compose.runtime.getValue
@@ -5,12 +6,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import com.metzger100.calculator.R
+import com.metzger100.calculator.data.local.entity.UnitHistoryEntity
+import com.metzger100.calculator.data.repository.UnitHistoryRepository
 import com.metzger100.calculator.features.unit.ui.UnitConverterConstants
 import com.metzger100.calculator.features.unit.ui.UnitConverterConstants.UnitDef
-import com.metzger100.calculator.R
 import com.metzger100.calculator.util.format.NumberFormatService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import jakarta.inject.Inject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
@@ -27,6 +33,7 @@ data class UnitConverterUiState(
 @HiltViewModel
 class UnitConverterViewModel @Inject constructor(
     private val numberFormatService: NumberFormatService,
+    private val unitHistoryRepo: UnitHistoryRepository,               // ← NEW
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -49,7 +56,40 @@ class UnitConverterViewModel @Inject constructor(
     )
         private set
 
-    /** Formatieren einer Zahl für die Anzeige (außerhalb des editierbaren Feldes) */
+    // 3) History (per category)
+    var unitHistory by mutableStateOf<List<UnitHistoryEntity>>(emptyList())
+        private set
+
+    init {
+        loadHistory()
+    }
+
+    private fun loadHistory() {
+        CoroutineScope(Dispatchers.IO).launch {
+            val list = unitHistoryRepo.getHistory(category)
+            unitHistory = list
+        }
+    }
+
+    /** UI -> History eintragen (Kategorie wird intern verwendet) */
+    suspend fun addToHistory(fromValue: String, fromUnit: String, toValue: String, toUnit: String) {
+        unitHistoryRepo.insert(
+            category = category,
+            fromValue = fromValue,
+            fromUnit = fromUnit,
+            toValue = toValue,
+            toUnit = toUnit,
+            timestamp = System.currentTimeMillis()
+        )
+        loadHistory()
+    }
+
+    suspend fun clearUnitHistory() {
+        unitHistoryRepo.clearHistory(category)
+        loadHistory()
+    }
+
+    /** Für die Anzeige formatieren (wie Currency) */
     fun formatNumber(input: String, shortMode: Boolean): String =
         numberFormatService.formatNumber(input, shortMode, inputLine = false)
 

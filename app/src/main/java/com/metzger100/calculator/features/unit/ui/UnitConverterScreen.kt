@@ -1,8 +1,11 @@
+// com.metzger100.calculator.features.unit.ui.UnitConverterScreen.kt
 package com.metzger100.calculator.features.unit.ui
 
 import android.annotation.SuppressLint
 import android.content.ClipData
+import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.StringRes
 import androidx.compose.foundation.border
@@ -11,16 +14,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -29,14 +30,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.metzger100.calculator.R
+import com.metzger100.calculator.data.local.entity.UnitHistoryEntity
 import com.metzger100.calculator.features.unit.viewmodel.UnitConverterViewModel
 import com.metzger100.calculator.features.unit.ui.UnitConverterConstants.UnitDef
 import com.metzger100.calculator.util.FeedbackManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.math.BigDecimal
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
@@ -48,6 +55,7 @@ fun UnitConverterScreen(
     val uiState by viewModel::uiState
     val feedbackManager = FeedbackManager.rememberFeedbackManager()
     val view = LocalView.current
+    val context = LocalContext.current
 
     BoxWithConstraints(
         Modifier
@@ -88,8 +96,43 @@ fun UnitConverterScreen(
                 feedbackManager = feedbackManager,
                 view = view
             )
+            Spacer(Modifier.height(8.dp))
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .clipToBounds()
+            ) {
+                val ctx = LocalContext.current
+                val textColor   = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+                val resultColor = MaterialTheme.colorScheme.primary.toArgb()
+
+                AndroidView(
+                    factory = {
+                        RecyclerView(ctx).apply {
+                            layoutManager =
+                                LinearLayoutManager(ctx, LinearLayoutManager.VERTICAL, true)
+                            adapter = UnitHistoryAdapter(
+                                format = { s, short -> viewModel.formatNumber(s, short) },
+                                textColor = textColor,
+                                resultColor = resultColor
+                            )
+                            clipToPadding = true
+                            clipChildren = true
+                        }
+                    },
+                    update = { rv ->
+                        val adapter = rv.adapter as UnitHistoryAdapter
+                        adapter.updateData(viewModel.unitHistory)
+                        if (viewModel.unitHistory.isNotEmpty()) rv.scrollToPosition(0)
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
+        // Keyboard (with "=" that writes to history + clears)
         Box(
             Modifier
                 .fillMaxWidth()
@@ -98,22 +141,38 @@ fun UnitConverterScreen(
         ) {
             UnitConverterKeyboard(
                 onInput = { label ->
-                    val current = if (viewModel.uiState.selectedField == 1)
-                        viewModel.uiState.fromValue
-                    else
-                        viewModel.uiState.toValue
-
+                    val current = if (uiState.selectedField == 1) uiState.fromValue else uiState.toValue
                     viewModel.onValueChange(current + label)
                 },
                 onClear = { viewModel.onValueChange("") },
                 onBack = {
-                    val current = if (viewModel.uiState.selectedField == 1)
-                        viewModel.uiState.fromValue
-                    else
-                        viewModel.uiState.toValue
+                    val current = if (uiState.selectedField == 1) uiState.fromValue else uiState.toValue
+                    if (current.isNotEmpty()) viewModel.onValueChange(current.dropLast(1))
+                },
+                onEquals = {
+                    val (fromV, fromU, toV, toU) =
+                        if (uiState.selectedField == 1)
+                            arrayOf(uiState.fromValue,
+                                context.getString(uiState.fromUnit.nameRes),
+                                uiState.toValue,
+                                context.getString(uiState.toUnit.nameRes))
+                        else
+                            arrayOf(uiState.toValue,
+                                context.getString(uiState.toUnit.nameRes),
+                                uiState.fromValue,
+                                context.getString(uiState.fromUnit.nameRes))
 
-                    if (current.isNotEmpty())
-                        viewModel.onValueChange(current.dropLast(1))
+                    if (fromV.isNotBlank() && toV.isNotBlank() && fromV != "0" && toV != "0") {
+                        coroutineScope.launch {
+                            viewModel.addToHistory(
+                                fromValue = fromV,
+                                fromUnit  = fromU,
+                                toValue   = toV,
+                                toUnit    = toU
+                            )
+                        }
+                    }
+                    viewModel.onValueChange("")
                 }
             )
         }
@@ -132,7 +191,7 @@ fun UnitRow(
     snackbarHostState: SnackbarHostState,
     coroutineScope: CoroutineScope,
     feedbackManager: FeedbackManager,
-    view: android.view.View
+    view: View
 ) {
     var show by remember { mutableStateOf(false) }
     val borderM = if (isSel) Modifier.border(
@@ -199,9 +258,7 @@ fun UnitRow(
                         coroutineScope.launch {
                             feedbackManager.provideFeedback(view)
                             clipboard.setClipEntry(
-                                ClipEntry(
-                                    ClipData.newPlainText("Currency Value", value)
-                                )
+                                ClipEntry(ClipData.newPlainText("Unit Value", value))
                             )
                             snackbarHostState.showSnackbar(
                                 message = snackDesc,
@@ -296,3 +353,76 @@ fun UnitSelectorDialogRV(
 }
 
 private class UnitViewHolder(val textView: TextView) : RecyclerView.ViewHolder(textView)
+
+// ───────────────────────── Embedded adapter (like Currency) ─────────────────────────
+
+private class UnitHistoryAdapter(
+    private val format: (String, Boolean) -> String,  // viewModel::formatNumber
+    private val textColor: Int,
+    private val resultColor: Int
+) : RecyclerView.Adapter<UnitHistoryViewHolder>() {
+
+    private var items: List<UnitHistoryEntity> = emptyList()
+
+    fun updateData(newItems: List<UnitHistoryEntity>) {
+        val diff = DiffUtil.calculateDiff(object : DiffUtil.Callback() {
+            override fun getOldListSize() = items.size
+            override fun getNewListSize() = newItems.size
+            override fun areItemsTheSame(o: Int, n: Int) = items[o].id == newItems[n].id
+            override fun areContentsTheSame(o: Int, n: Int) = items[o] == newItems[n]
+        })
+        items = newItems
+        diff.dispatchUpdatesTo(this)
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UnitHistoryViewHolder {
+        val ctx = parent.context
+        val ll = LinearLayout(ctx).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(16, 12, 16, 12)
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+        val timeTv = TextView(ctx).apply {
+            textSize = 12f
+            setTextColor(textColor)                 // timestamp = onSurfaceVariant
+        }
+        val lineTv = TextView(ctx).apply {
+            textSize = 16f
+            setTextColor(resultColor)               // value line = primary (blue)
+        }
+        ll.addView(timeTv)
+        ll.addView(lineTv)
+        return UnitHistoryViewHolder(ll, timeTv, lineTv)
+    }
+
+    override fun getItemCount() = items.size
+
+    override fun onBindViewHolder(holder: UnitHistoryViewHolder, position: Int) {
+        val e = items[position]
+
+        // timestamp
+        holder.timeTv.text = Instant.ofEpochMilli(e.timestamp)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
+
+        // short-mode rule: derive from *input* (fromValue)
+        val shortMode = runCatching {
+            BigDecimal(e.fromValue).stripTrailingZeros().scale() <= 2
+        }.getOrDefault(true)
+
+        val fromFmt = format(e.fromValue, shortMode)
+        val toFmt   = format(e.toValue,   shortMode)
+
+        holder.lineTv.text = "${e.fromUnit}: $fromFmt  →  ${e.toUnit}: $toFmt"
+    }
+}
+
+private class UnitHistoryViewHolder(
+    view: View,
+    val timeTv: TextView,
+    val lineTv: TextView
+) : RecyclerView.ViewHolder(view)

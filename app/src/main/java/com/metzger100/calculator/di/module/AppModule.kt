@@ -15,9 +15,12 @@ import com.metzger100.calculator.data.local.dao.CurrencyHistoryDao
 import com.metzger100.calculator.data.local.dao.CurrencyListDao
 import com.metzger100.calculator.data.local.dao.CurrencyPrefsDao
 import com.metzger100.calculator.data.local.dao.CurrencyRateDao
+import com.metzger100.calculator.data.local.dao.UnitHistoryDao
 import com.metzger100.calculator.data.local.database.MIGRATION_1_2
 import com.metzger100.calculator.data.local.database.MIGRATION_2_3
+import com.metzger100.calculator.data.local.database.MIGRATION_3_4
 import com.metzger100.calculator.data.repository.SettingsRepository
+import com.metzger100.calculator.data.repository.UnitHistoryRepository
 import com.metzger100.calculator.di.IoDispatcher
 import com.metzger100.calculator.di.SettingsDataStore
 import dagger.Module
@@ -45,6 +48,7 @@ object AppModule {
         )
             .addMigrations(MIGRATION_1_2)
             .addMigrations(MIGRATION_2_3)
+            .addMigrations(MIGRATION_3_4)
             .build()
     }
 
@@ -69,6 +73,14 @@ object AppModule {
     @Provides
     fun provideCurrencyHistoryDao(db: CalculatorDatabase): CurrencyHistoryDao =
         db.currencyHistoryDao()
+
+    @Provides
+    fun provideUnitHistoryDao(db: CalculatorDatabase): UnitHistoryDao =
+        db.unitHistoryDao()
+
+    @Provides
+    fun provideUnitHistoryRepository(dao: UnitHistoryDao): UnitHistoryRepository =
+        UnitHistoryRepository(dao)
 
     @IoDispatcher
     @Provides
