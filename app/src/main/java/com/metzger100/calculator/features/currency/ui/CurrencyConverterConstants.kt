@@ -2,11 +2,19 @@
 package com.metzger100.calculator.features.currency.ui
 
 object CurrencyConverterConstants {
-    // Nur diese Währungen wollen wir im Dropdown zeigen:
+    // Only these currencies will be shown in the dropdown:
     val MajorCurrencyCodes = listOf(
-        "AUD","BGN","BRL","CAD","CHF","CNY","CZK","DKK",
-        "EUR","GBP","HKD","HRK","HUF","IDR","ILS","INR",
-        "ISK","JPY","KRW","MXN","MYR","NOK","NZD","PHP",
-        "PLN","RON","RUB","SEK","SGD","THB","TRY","USD","ZAR"
-    )
+    // Top most traded currencies globally
+    "USD", "EUR", "JPY", "GBP", "CHF", "CAD", "AUD", "CNY",
+    // Important currencies by region
+    "HKD", "SGD", "SEK", "NOK", "DKK", "NZD", "KRW",
+    // Emerging economies
+    "BRL", "MXN", "INR", "ZAR", "TRY", "RUB",
+    // Europe (non-euro)
+    "PLN", "CZK", "HUF", "RON", "BGN",
+    // Asia
+    "THB", "MYR", "PHP", "IDR",
+    // Others
+    "ILS", "ISK"
+)
 }
