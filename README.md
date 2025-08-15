@@ -71,7 +71,7 @@ An elegant, Android-native calculator and currency converter app, built with **J
 ### Clone the repo
 
 ```bash
-git https://github.com/metzger100/calculator.git
+git clone https://github.com/metzger100/calculator.git
 cd calculator
 ```
 
