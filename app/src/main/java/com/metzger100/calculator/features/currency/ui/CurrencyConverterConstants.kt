@@ -13,7 +13,7 @@ object CurrencyConverterConstants {
     // Europe (non-euro)
     "PLN", "CZK", "HUF", "RON", "BGN",
     // Asia
-    "THB", "MYR", "PHP", "IDR",
+    "THB", "MYR", "PHP", "IDR", "TWD",
     // Others
     "ILS", "ISK"
 )
