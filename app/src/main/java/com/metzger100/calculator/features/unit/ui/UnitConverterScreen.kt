@@ -251,7 +251,7 @@ fun UnitRow(
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.headlineLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface,
-                    letterSpacing = 3.sp,
+                    letterSpacing = 1.sp,
                     fontSize = if (isSel) 24.sp else 20.sp
                 )
             )

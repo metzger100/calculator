@@ -354,7 +354,7 @@ private fun CurrencyRow(
                 textAlign = TextAlign.End,
                 style = MaterialTheme.typography.headlineLarge.copy(
                     color = MaterialTheme.colorScheme.onSurface,
-                    letterSpacing = 3.sp,
+                    letterSpacing = 1.sp,
                     fontSize = if (isSelected)
                         MaterialTheme.typography.headlineLarge.fontSize
                     else
