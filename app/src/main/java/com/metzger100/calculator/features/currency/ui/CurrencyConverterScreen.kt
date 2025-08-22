@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -347,11 +348,18 @@ private fun CurrencyRow(
             Spacer(Modifier.width(16.dp))
             Text(
                 text = value.ifEmpty { "0" },
-                fontSize = if (isSelected) 24.sp else 20.sp,
-                modifier = Modifier
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 softWrap = true,
-                maxLines = Int.MAX_VALUE
+                maxLines = Int.MAX_VALUE,
+                textAlign = TextAlign.End,
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                    letterSpacing = 3.sp,
+                    fontSize = if (isSelected)
+                        MaterialTheme.typography.headlineLarge.fontSize
+                    else
+                        20.sp
+                )
             )
             if (value.isNotEmpty() && value != "0") {
                 val snackDesc = stringResource(R.string.value_copied)
