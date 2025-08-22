@@ -19,14 +19,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -194,13 +199,18 @@ fun UnitRow(
     view: View
 ) {
     var show by remember { mutableStateOf(false) }
-    val borderM = if (isSel) Modifier.border(
-        2.dp,
-        MaterialTheme.colorScheme.primary,
-        MaterialTheme.shapes.medium
-    ) else Modifier
+    val borderM =
+        if (isSel) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+        else Modifier
 
     val clipboard = LocalClipboard.current
+
+    val unitLabel = stringResource(labelRes)
+    val changeUnitDesc = stringResource(R.string.change_unit_content_description, unitLabel)
+    val displayText = if (isSel) value.ifEmpty { "0" } else formatNumber(value, false)
+
+    val textMeasurer = rememberTextMeasurer()
+    var labelWidthPx by remember { mutableStateOf(0) }
 
     Card(
         Modifier
@@ -212,69 +222,148 @@ fun UnitRow(
             },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(
+        BoxWithConstraints(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 12.dp, vertical = 14.dp)
         ) {
-            val unitLabel = stringResource(labelRes)
-            val changeUnitDesc = stringResource(R.string.change_unit_content_description, unitLabel)
-            Text(
-                text = stringResource(labelRes),
-                fontSize = 18.sp,
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .clickable {
-                        feedbackManager.provideFeedback(view)
-                        show = true
-                    }
-                    .semantics {
-                        contentDescription = changeUnitDesc
-                    }
-            )
-            Spacer(Modifier.width(16.dp))
+            val density = LocalDensity.current
+            val spacerWidth = 16.dp
+            val trailingIconWidth = if (value.isNotEmpty() && value != "0") 48.dp else 0.dp
 
-            val displayText = if (isSel) {
-                value.ifEmpty { "0" }
-            } else {
-                formatNumber(value, false)
+            val availableValueWidthPx = with(density) {
+                (maxWidth
+                        - spacerWidth
+                        - trailingIconWidth)
+                    .toPx()
+                    .toInt() - labelWidthPx
+            }.coerceAtLeast(0)
+
+            val valueTextStyle = MaterialTheme.typography.headlineLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                letterSpacing = 1.sp,
+                fontSize = if (isSel) 24.sp else 20.sp
+            )
+
+            val needsStack = remember(displayText, availableValueWidthPx, valueTextStyle) {
+                if (availableValueWidthPx <= 0) {
+                    false
+                } else {
+                    val layout = textMeasurer.measure(
+                        text = AnnotatedString(displayText),
+                        style = valueTextStyle,
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                        constraints = Constraints(maxWidth = availableValueWidthPx)
+                    )
+                    layout.lineCount > 1
+                }
             }
 
-            Text(
-                text = displayText,
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically),
-                softWrap = true,
-                maxLines = Int.MAX_VALUE,
-                textAlign = TextAlign.End,
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    letterSpacing = 1.sp,
-                    fontSize = if (isSel) 24.sp else 20.sp
-                )
-            )
+            if (!needsStack) {
+                // ---- Inline Row layout ----
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = unitLabel,
+                        fontSize = 18.sp,
+                        modifier = Modifier
+                            .onSizeChanged { labelWidthPx = it.width } // measure label width for next pass
+                            .clickable {
+                                feedbackManager.provideFeedback(view)
+                                show = true
+                            }
+                            .semantics { contentDescription = changeUnitDesc }
+                    )
 
-            if (value.isNotEmpty() && value != "0") {
-                val snackDesc = stringResource(R.string.value_copied)
-                IconButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            feedbackManager.provideFeedback(view)
-                            clipboard.setClipEntry(
-                                ClipEntry(ClipData.newPlainText("Unit Value", value))
-                            )
-                            snackbarHostState.showSnackbar(
-                                message = snackDesc,
-                                withDismissAction = true
+                    Spacer(Modifier.width(spacerWidth))
+
+                    Text(
+                        text = displayText,
+                        modifier = Modifier.weight(1f),
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                        textAlign = TextAlign.End,
+                        style = valueTextStyle
+                    )
+
+                    if (value.isNotEmpty() && value != "0") {
+                        val snackDesc = stringResource(R.string.value_copied)
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    feedbackManager.provideFeedback(view)
+                                    clipboard.setClipEntry(
+                                        ClipEntry(ClipData.newPlainText("Unit Value", value))
+                                    )
+                                    snackbarHostState.showSnackbar(
+                                        message = snackDesc,
+                                        withDismissAction = true
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = stringResource(R.string.copy_value)
                             )
                         }
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = stringResource(R.string.copy_value)
+                }
+            } else {
+                // ---- Stacked layout: label + icon on first row, value below ----
+                Column(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = unitLabel,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .onSizeChanged { labelWidthPx = it.width }
+                                .clickable {
+                                    feedbackManager.provideFeedback(view)
+                                    show = true
+                                }
+                                .semantics { contentDescription = changeUnitDesc }
+                        )
+                        Spacer(Modifier.weight(1f))
+                        if (value.isNotEmpty() && value != "0") {
+                            val snackDesc = stringResource(R.string.value_copied)
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        feedbackManager.provideFeedback(view)
+                                        clipboard.setClipEntry(
+                                            ClipEntry(ClipData.newPlainText("Unit Value", value))
+                                        )
+                                        snackbarHostState.showSnackbar(
+                                            message = snackDesc,
+                                            withDismissAction = true
+                                        )
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = stringResource(R.string.copy_value)
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = displayText,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                        textAlign = TextAlign.End,
+                        style = valueTextStyle
                     )
                 }
             }

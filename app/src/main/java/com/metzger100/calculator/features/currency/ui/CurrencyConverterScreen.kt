@@ -20,14 +20,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -326,62 +331,161 @@ private fun CurrencyRow(
             },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Row(
+        // ----- pre-measure + layout switch without feedback loops -----
+        BoxWithConstraints(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(horizontal = 12.dp, vertical = 14.dp) // keep inner padding here
         ) {
-            val changeCurrencyDesc = stringResource(R.string.change_currency_content_description, currency)
-            Text(
-                text = currency,
-                fontSize = 18.sp,
-                modifier = Modifier
-                    .clickable {
-                        feedbackManager.provideFeedback(view)
-                        showDialog = true
-                    }
-                    .semantics {
-                        contentDescription = changeCurrencyDesc
-                    }
+            val density = LocalDensity.current
+            val textMeasurer = rememberTextMeasurer()
+
+            // measure label width so we know how much is left for the value in inline layout
+            var labelWidthPx by remember { mutableStateOf(0) }
+
+            val spacerWidth = 16.dp
+            val hasCopy = value.isNotEmpty() && value != "0"
+            // IconButton defaults to 48.dp
+            val trailingIconWidth = if (hasCopy) 48.dp else 0.dp
+
+            val availableValueWidthPx = with(density) {
+                (maxWidth - spacerWidth - trailingIconWidth).toPx().toInt() - labelWidthPx
+            }.coerceAtLeast(0)
+
+            val valueText = value.ifEmpty { "0" }
+            val valueTextStyle = MaterialTheme.typography.headlineLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                letterSpacing = 1.sp,
+                fontSize = if (isSelected)
+                    MaterialTheme.typography.headlineLarge.fontSize
+                else
+                    20.sp
             )
-            Spacer(Modifier.width(16.dp))
-            Text(
-                text = value.ifEmpty { "0" },
-                modifier = Modifier.weight(1f),
-                softWrap = true,
-                maxLines = Int.MAX_VALUE,
-                textAlign = TextAlign.End,
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    letterSpacing = 1.sp,
-                    fontSize = if (isSelected)
-                        MaterialTheme.typography.headlineLarge.fontSize
-                    else
-                        20.sp
-                )
-            )
-            if (value.isNotEmpty() && value != "0") {
-                val snackDesc = stringResource(R.string.value_copied)
-                IconButton(
-                    onClick = {
-                        feedbackManager.provideFeedback(view)
-                        coroutineScope.launch {
-                            clipboard.setClipEntry(
-                                ClipEntry(
-                                    ClipData.newPlainText("Currency Value", value)
-                                )
-                            )
-                            snackbarHostState.showSnackbar(
-                                message = snackDesc,
-                                withDismissAction = true
+
+            // Measure as if inline in the Row
+            val needsStack = remember(valueText, availableValueWidthPx, valueTextStyle) {
+                if (availableValueWidthPx <= 0) {
+                    false // first pass: default to inline; will re-evaluate when width known
+                } else {
+                    val layout = textMeasurer.measure(
+                        text = AnnotatedString(valueText),
+                        style = valueTextStyle,
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                        constraints = Constraints(maxWidth = availableValueWidthPx)
+                    )
+                    layout.lineCount > 1
+                }
+            }
+
+            if (!needsStack) {
+                // ----- Inline Row -----
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val changeCurrencyDesc =
+                        stringResource(R.string.change_currency_content_description, currency)
+                    Text(
+                        text = currency,
+                        fontSize = 18.sp,
+                        modifier = Modifier
+                            .onSizeChanged { labelWidthPx = it.width }
+                            .clickable {
+                                feedbackManager.provideFeedback(view)
+                                showDialog = true
+                            }
+                            .semantics { contentDescription = changeCurrencyDesc }
+                    )
+
+                    Spacer(Modifier.width(spacerWidth))
+
+                    Text(
+                        text = valueText,
+                        modifier = Modifier.weight(1f),
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                        textAlign = TextAlign.End,
+                        style = valueTextStyle
+                    )
+
+                    if (hasCopy) {
+                        val snackDesc = stringResource(R.string.value_copied)
+                        IconButton(
+                            onClick = {
+                                feedbackManager.provideFeedback(view)
+                                coroutineScope.launch {
+                                    clipboard.setClipEntry(
+                                        ClipEntry(ClipData.newPlainText("Currency Value", value))
+                                    )
+                                    snackbarHostState.showSnackbar(
+                                        message = snackDesc,
+                                        withDismissAction = true
+                                    )
+                                }
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = stringResource(R.string.copy_value)
                             )
                         }
                     }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = stringResource(R.string.copy_value)
+                }
+            } else {
+                // ----- Stacked: label (+ copy) on first row, value below -----
+                Column(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val changeCurrencyDesc =
+                            stringResource(R.string.change_currency_content_description, currency)
+                        Text(
+                            text = currency,
+                            fontSize = 18.sp,
+                            modifier = Modifier
+                                .onSizeChanged { labelWidthPx = it.width }
+                                .clickable {
+                                    feedbackManager.provideFeedback(view)
+                                    showDialog = true
+                                }
+                                .semantics { contentDescription = changeCurrencyDesc }
+                        )
+                        Spacer(Modifier.weight(1f))
+                        if (hasCopy) {
+                            val snackDesc = stringResource(R.string.value_copied)
+                            IconButton(
+                                onClick = {
+                                    feedbackManager.provideFeedback(view)
+                                    coroutineScope.launch {
+                                        clipboard.setClipEntry(
+                                            ClipEntry(ClipData.newPlainText("Currency Value", value))
+                                        )
+                                        snackbarHostState.showSnackbar(
+                                            message = snackDesc,
+                                            withDismissAction = true
+                                        )
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.ContentCopy,
+                                    contentDescription = stringResource(R.string.copy_value)
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = valueText,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp),
+                        softWrap = true,
+                        maxLines = Int.MAX_VALUE,
+                        textAlign = TextAlign.End,
+                        style = valueTextStyle
                     )
                 }
             }
