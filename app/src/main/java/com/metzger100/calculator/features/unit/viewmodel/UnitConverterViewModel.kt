@@ -178,13 +178,13 @@ class UnitConverterViewModel @Inject constructor(
             uiState.copy(fromUnit = from, toUnit = to, fromValue = newFromVal)
         }
     }
-
-    /** Prefer last history pair; otherwise defaults. */
+    
+    /** Prefer most-recent history pair; otherwise defaults. */
     private fun applyUnitsFromHistoryOrDefaults(history: List<UnitHistoryEntity>) {
-        val last = history.lastOrNull()
-        if (last != null) {
-            val fromU = findUnitByLabel(last.fromUnit)
-            val toU   = findUnitByLabel(last.toUnit)
+        val mostRecent = history.firstOrNull()
+        if (mostRecent != null) {
+            val fromU = findUnitByLabel(mostRecent.fromUnit)
+            val toU   = findUnitByLabel(mostRecent.toUnit)
             if (fromU != null && toU != null) {
                 applyUnits(fromU, toU)
                 return
