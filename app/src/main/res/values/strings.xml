@@ -181,12 +181,13 @@
 
     <!-- Speed -->
     <string name="UnitConvCatSpeed_MeterPerSecond">m/s - Meter/Second</string>
+    <string name="UnitConvCatSpeed_MinutePerKilometer">min/km - Minutes/Kilometer</string>
+    <string name="UnitConvCatSpeed_KilometerPerSecond">km/s - Meter/Second</string>
     <string name="UnitConvCatSpeed_KilometerPerHour">km/h - Kilometer/Hour</string>
     <string name="UnitConvCatSpeed_MilePerHour">mph - Mile/Hour</string>
     <string name="UnitConvCatSpeed_Knot">kt - Knot</string>
     <string name="UnitConvCatSpeed_Mach">Ma - Mach</string>
     <string name="UnitConvCatSpeed_FootPerSecond">ft/s - Foot/Second</string>
-    <string name="UnitConvCatSpeed_KilometerPerSecond">km/s - Kilometer/Second</string>
 
     <!-- Energy -->
     <string name="UnitConvCatEnergy_Joule">J - Joule</string>

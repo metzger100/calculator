@@ -181,6 +181,7 @@
 
 	<!-- Speed -->
 	<string name="UnitConvCatSpeed_MeterPerSecond">m/s - Meter pro Sekunde</string>
+    <string name="UnitConvCatSpeed_MinutePerKilometer">min/km - Minuten pro Kilometer</string>
 	<string name="UnitConvCatSpeed_KilometerPerHour">km/h - Kilometer pro Stunde</string>
 	<string name="UnitConvCatSpeed_MilePerHour">mph - Meile pro Stunde</string>
 	<string name="UnitConvCatSpeed_Knot">kt - Knoten</string>

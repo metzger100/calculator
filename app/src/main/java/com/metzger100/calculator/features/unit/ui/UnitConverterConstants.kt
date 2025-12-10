@@ -122,6 +122,7 @@ object UnitConverterConstants {
         "Speed" to listOf(
             UnitDef(R.string.UnitConvCatSpeed_MeterPerSecond, BigDecimal("1.0")),
             UnitDef(R.string.UnitConvCatSpeed_KilometerPerSecond, BigDecimal("1000.0")),
+            UnitDef(R.string.UnitConvCatSpeed_MinutePerKilometer, BigDecimal("1.0")),
             UnitDef(R.string.UnitConvCatSpeed_KilometerPerHour, BigDecimal("0.2777777777777777")),
             UnitDef(R.string.UnitConvCatSpeed_FootPerSecond, BigDecimal("0.3048")),
             UnitDef(R.string.UnitConvCatSpeed_MilePerHour, BigDecimal("0.44704")),

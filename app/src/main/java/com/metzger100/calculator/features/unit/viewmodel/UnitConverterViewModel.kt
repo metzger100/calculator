@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
+import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 
@@ -272,6 +273,66 @@ class UnitConverterViewModel @Inject constructor(
                             .multiply(BigDecimal("9"), mc)
                             .divide(BigDecimal("5"), mc)
                     else -> c
+                }
+            }
+            "Speed" -> {
+                val mc = MathContext(18, RoundingMode.HALF_UP)
+                val THOUSAND = BigDecimal("1000")
+                val ZERO = BigDecimal.ZERO
+
+                fun parsePaceSeconds(text: String): BigDecimal? {
+                    val t = text.trim()
+                    if (t.isEmpty()) return null
+
+
+                    val parts = when {
+                        t.contains(".") -> t.split(".", limit = 2)
+                        else -> listOf(t, "0")
+                    }
+                    if (parts.size != 2) return null
+
+                    val min = parts[0].toLongOrNull() ?: return null
+                    val sec = (parts[1].ifEmpty { "0" }).toLongOrNull() ?: return null
+
+                    val total = min * 60L + sec // Sekunden dürfen >=60 sein -> ergibt automatisch carry über total
+                    return BigDecimal(total.toString())
+                }
+
+                fun formatPace(totalSeconds: BigDecimal): String {
+                    val rounded = totalSeconds.setScale(0, RoundingMode.HALF_UP).toBigInteger()
+                    val min = rounded.divide(BigInteger.valueOf(60L))
+                    val sec = rounded.mod(BigInteger.valueOf(60L)).toInt()
+                    return "$min.${sec.toString().padStart(2, '0')}" // z.B. 5.11
+                }
+
+                // 1) von a -> m/s (Base)
+                val baseMs: BigDecimal = when (a.nameRes) {
+                    R.string.UnitConvCatSpeed_MinutePerKilometer -> {
+                        val paceSec = parsePaceSeconds(input) ?: return ""
+                        if (paceSec <= ZERO) return ""
+                        // m/s = 1000 / (secPerKm)
+                        THOUSAND.divide(paceSec, mc)
+                    }
+                    else -> {
+                        val v = input.toBigDecimalOrNull() ?: return ""
+                        v.multiply(a.factorToBase, mc)
+                    }
+                }
+
+                // 2) m/s -> Ziel b
+                return when (b.nameRes) {
+                    R.string.UnitConvCatSpeed_MinutePerKilometer -> {
+                        if (baseMs <= ZERO) ""
+                        else {
+                            val secPerKm = THOUSAND.divide(baseMs, mc)
+                            formatPace(secPerKm)
+                        }
+                    }
+                    else -> {
+                        baseMs.divide(b.factorToBase, mc)
+                            .stripTrailingZeros()
+                            .toPlainString()
+                    }
                 }
             }
             "FuelEconomy" -> {
