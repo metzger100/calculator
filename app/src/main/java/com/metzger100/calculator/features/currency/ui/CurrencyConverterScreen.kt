@@ -341,7 +341,7 @@ private fun CurrencyRow(
             val textMeasurer = rememberTextMeasurer()
 
             // measure label width so we know how much is left for the value in inline layout
-            var labelWidthPx by remember { mutableStateOf(0) }
+            var labelWidthPx by remember { mutableIntStateOf(0) }
 
             val spacerWidth = 16.dp
             val hasCopy = value.isNotEmpty() && value != "0"

@@ -27,8 +27,6 @@
 	<string name="change_unit_content_description">Ändere Einheit %1$s</string>
 	<string name="select_currency_content_description">Wähle Währung %1$s</string>
 	<string name="change_currency_content_description">Ändere Währung %1$s</string>
-	<string name="TopAppBar_Haptics">Haptik</string>
-	<string name="TopAppBar_Sound">Sound</string>
 	<string name="Settings_Title">Einstellungen</string>
 	<string name="Settings_ThemeTitle">Theme</string>
 	<string name="Settings_ThemeSystem">System folgen</string>
@@ -115,7 +113,6 @@
 	<string name="UnitConvCatLength_Micrometer">µm - Mikrometer</string>
 	<string name="UnitConvCatLength_Angstrom">Å - Ångström</string>
 	<string name="UnitConvCatLength_AstronomicalUnit">AE - Astronomische Einheit</string>
-	<string name="UnitConvCatLength_KilometerPerSecond">km/s - Kilometer pro Sekunde</string>
 
 	<!-- Weight -->
 	<string name="UnitConvCatWeight_Kilogram">kg - Kilogramm</string>
@@ -231,7 +228,6 @@
 	<string name="UnitConvCatData_Kilobyte">kB - Kilobyte</string>
 	<string name="UnitConvCatData_Megabyte">MB - Megabyte</string>
 	<string name="UnitConvCatData_Kilobit">kb - Kilobit</string>
-	<string name="UnitConvCatData_Mebibit">Mib - Mebibyte</string>
 	<string name="UnitConvCatData_Megabit">Mb - Megabit</string>
 	<string name="UnitConvCatData_Gigabit">Gb - Gigabit</string>
 	<string name="UnitConvCatData_Gigabyte">GB - Gigabyte</string>

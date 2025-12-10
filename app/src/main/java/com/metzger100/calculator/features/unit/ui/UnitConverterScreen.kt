@@ -210,7 +210,7 @@ fun UnitRow(
     val displayText = if (isSel) value.ifEmpty { "0" } else formatNumber(value, false)
 
     val textMeasurer = rememberTextMeasurer()
-    var labelWidthPx by remember { mutableStateOf(0) }
+    var labelWidthPx by remember { mutableIntStateOf(0) }
 
     Card(
         Modifier

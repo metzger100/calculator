@@ -23,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.metzger100.calculator.features.calculator.viewmodel.CalculatorViewModel
@@ -68,13 +68,13 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            settingsLoaded = AppContent(startRoute, forceOpenKeyboard)
+            settingsLoaded = appContent(startRoute, forceOpenKeyboard)
         }
     }
 }
 
 @Composable
-fun AppContent(
+fun appContent(
     startRoute: String? = null,
     forceOpenKeyboard: Boolean = false
 ): Boolean {

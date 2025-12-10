@@ -51,19 +51,19 @@ object KeyboardButtonStyle {
 @Composable
 fun KeyboardButton(
     label: String,
-    modifier: Modifier = Modifier.Companion,
+    modifier: Modifier = Modifier,
     fontSize: TextUnit = 24.sp,
     onClick: () -> Unit
 ) {
     val highlighted = KeyboardButtonStyle.isHighlighted(label)
     val faded       = KeyboardButtonStyle.isFaded(label)
 
-    val feedbackManager = FeedbackManager.Companion.rememberFeedbackManager()
+    val feedbackManager = FeedbackManager.rememberFeedbackManager()
     val view = LocalView.current
 
     val buttonColor = when {
         highlighted -> MaterialTheme.colorScheme.primary
-        faded       -> Color.Companion.Gray
+        faded       -> Color.Gray
         else        -> MaterialTheme.colorScheme.surfaceVariant
     }
     val textColor = if (highlighted)
@@ -86,8 +86,8 @@ fun KeyboardButton(
         shape = MaterialTheme.shapes.medium
     ) {
         Box(
-            contentAlignment = Alignment.Companion.Center,
-            modifier = Modifier.Companion.fillMaxSize()
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize()
         ) {
             when (label) {
                 "←" -> Icon(Icons.AutoMirrored.Filled.Backspace, contentDescription = "Backspace")
