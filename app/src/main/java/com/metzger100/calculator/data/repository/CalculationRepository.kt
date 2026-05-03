@@ -2,8 +2,11 @@ package com.metzger100.calculator.data.repository
 
 import com.metzger100.calculator.data.local.dao.CalculationDao
 import com.metzger100.calculator.data.local.entity.CalculationEntity
+import javax.inject.Inject
 
-class CalculationRepository(private val calcdao: CalculationDao) {
+class CalculationRepository @Inject constructor(
+    private val calcdao: CalculationDao
+) {
 
     suspend fun insert(input: String, result: String) {
         val entity = CalculationEntity(input = input, result = result)

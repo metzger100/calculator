@@ -24,7 +24,12 @@ interface CalculationDao {
     @Query("SELECT COUNT(*) FROM calculations")
     suspend fun getCount(): Int
 
-    @Query("DELETE FROM calculations WHERE id IN (SELECT id FROM calculations ORDER BY id ASC LIMIT :count)")
+    @Query(
+        "DELETE FROM calculations " +
+                "WHERE id IN (" +
+                "SELECT id FROM calculations ORDER BY id ASC LIMIT :count" +
+                ")"
+    )
     suspend fun deleteOldestEntries(count: Int)
 
     @Query("SELECT * FROM calculations ORDER BY id ASC")

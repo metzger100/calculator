@@ -6,7 +6,13 @@ import javax.inject.Inject
 
 class CurrencyHistoryRepository @Inject constructor(private val dao: CurrencyHistoryDao) {
 
-    suspend fun insert(amountFrom: String, currencyFrom: String, amountTo: String, currencyTo: String, timestamp: Long) {
+    suspend fun insert(
+        amountFrom: String,
+        currencyFrom: String,
+        amountTo: String,
+        currencyTo: String,
+        timestamp: Long
+    ) {
         val entity = CurrencyHistoryEntity(
             amountFrom = amountFrom,
             currencyFrom = currencyFrom,
@@ -18,6 +24,4 @@ class CurrencyHistoryRepository @Inject constructor(private val dao: CurrencyHis
     }
 
     suspend fun getHistory(): List<CurrencyHistoryEntity> = dao.getAll()
-
-    suspend fun clearHistory() = dao.clearAll()
 }

@@ -1,17 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?><!--suppress LongLine -->
 <resources>
     <string name="app_name">Calculator</string>
-    <string name="TopAppBar_Title">Calculator</string>
     <string name="TopAppBar_Menu">Open Menu</string>
     <string name="TopAppBar_PurgeHistory">Delete history</string>
     <string name="TopAppBar_RefreshRates">Update exchange rates</string>
-    <string name="NavItem_Calculator">Calculator</string>
     <string name="NavItem_Currency">Currency</string>
     <string name="NavItem_Units">Units</string>
     <string name="Calculator_Error">Error</string>
     <string name="no_exchange_data">No exchange rate data available. Please go online or restart the app.</string>
-    <string name="exchange_rates_as_of">Exchange rates as of:</string>
-    <string name="next_rates_update">Next update:</string>
+    <string name="exchange_rates_as_of_value">Exchange rates as of: %1$s</string>
+    <string name="next_rates_update_value">Next update: %1$s</string>
     <string name="no_data_available">No exchange rates available</string>
     <string name="update_due">Update due</string>
     <string name="Back">Back</string>
@@ -21,8 +19,10 @@
     <string name="hide_keyboard">Hide keyboard</string>
     <string name="copy_result">Copy result</string>
     <string name="result_copied">Result copied</string>
+    <string name="calculation_result_value">= %1$s</string>
     <string name="copy_value">Copy value</string>
     <string name="value_copied">Value copied</string>
+    <string name="conversion_history_entry">%1$s: %2$s  →  %3$s: %4$s</string>
     <string name="select_unit_content_description">Select unit %1$s</string>
     <string name="change_unit_content_description">Change unit %1$s</string>
     <string name="select_currency_content_description">Select currency %1$s</string>
@@ -32,7 +32,6 @@
     <string name="Settings_ThemeSystem">Follow system</string>
     <string name="Settings_ThemeLight">Light</string>
     <string name="Settings_ThemeDark">Dark</string>
-    <string name="TopAppBar_Settings">Settings</string>
     <string name="Settings_BehaviorOptions">Behavior</string>
     <string name="Settings_OpenKeyboard">Open keyboard on app launch</string>
     <string name="Settings_ScientificDefault">Open scientific keyboard by default</string>
@@ -60,7 +59,7 @@
     <string name="key_inverse">Inverse</string>
     <string name="key_degree">Degree mode</string>
     <string name="key_radian">Radian mode</string>
-    <string name="key_power">Power</string>
+    <string name="key_power">Exponent</string>
     <string name="key_log10">Log base 10</string>
     <string name="key_exp10">Ten to the power of</string>
     <string name="key_ln">Natural logarithm</string>
@@ -72,7 +71,7 @@
     <string name="key_reciprocal">Reciprocal</string>
     <string name="key_factorial">Factorial</string>
     <string name="key_pi">Pi</string>
-    <string name="key_eulers_number">Euler\'s number</string>
+    <string name="key_eulers_number">Euler\’s number</string>
     <string name="key_sin">Sine</string>
     <string name="key_sin_inverse">Inverse sine</string>
     <string name="key_cos">Cosine</string>

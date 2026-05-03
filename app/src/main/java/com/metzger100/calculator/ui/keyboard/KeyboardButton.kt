@@ -37,6 +37,7 @@ object KeyboardButtonStyle {
         "INV", "deg", "sin⁻¹", "cos⁻¹", "tan⁻¹", "lg",
         "10ˣ", "ln", "eˣ", "(", ")", "√", "x²", "x!(", "1/x",
         "π", "e", "sin", "cos", "tan", "^" -> true
+
         else -> false
     }
 }
@@ -56,15 +57,15 @@ fun KeyboardButton(
     onClick: () -> Unit
 ) {
     val highlighted = KeyboardButtonStyle.isHighlighted(label)
-    val faded       = KeyboardButtonStyle.isFaded(label)
+    val faded = KeyboardButtonStyle.isFaded(label)
 
     val feedbackManager = FeedbackManager.rememberFeedbackManager()
     val view = LocalView.current
 
     val buttonColor = when {
         highlighted -> MaterialTheme.colorScheme.primary
-        faded       -> Color.Gray
-        else        -> MaterialTheme.colorScheme.surfaceVariant
+        faded -> Color.Gray
+        else -> MaterialTheme.colorScheme.surfaceVariant
     }
     val textColor = if (highlighted)
         MaterialTheme.colorScheme.onPrimary
@@ -105,39 +106,39 @@ fun KeyboardButton(
 @Composable
 fun getKeyContentDescription(label: String): String {
     return when (label) {
-        "C"    -> stringResource(R.string.key_clear)
-        "←"    -> stringResource(R.string.key_backspace)
-        "%"    -> stringResource(R.string.key_percent)
-        "÷"    -> stringResource(R.string.key_divide)
-        "×"    -> stringResource(R.string.key_multiply)
-        "−"    -> stringResource(R.string.key_minus)
-        "+"    -> stringResource(R.string.key_plus)
-        "."    -> stringResource(R.string.key_decimal_point)
-        "="    -> stringResource(R.string.key_equals)
-        "⇄"    -> stringResource(R.string.key_switch_mode)
+        "C" -> stringResource(R.string.key_clear)
+        "←" -> stringResource(R.string.key_backspace)
+        "%" -> stringResource(R.string.key_percent)
+        "÷" -> stringResource(R.string.key_divide)
+        "×" -> stringResource(R.string.key_multiply)
+        "−" -> stringResource(R.string.key_minus)
+        "+" -> stringResource(R.string.key_plus)
+        "." -> stringResource(R.string.key_decimal_point)
+        "=" -> stringResource(R.string.key_equals)
+        "⇄" -> stringResource(R.string.key_switch_mode)
         // Scientific
-        "INV"       -> stringResource(R.string.key_inverse)
-        "deg"       -> stringResource(R.string.key_degree)
-        "rad"       -> stringResource(R.string.key_radian)
-        "^"         -> stringResource(R.string.key_power)
-        "lg"        -> stringResource(R.string.key_log10)
-        "10ˣ"       -> stringResource(R.string.key_exp10)
-        "ln"        -> stringResource(R.string.key_ln)
-        "eˣ"        -> stringResource(R.string.key_exp)
-        "("         -> stringResource(R.string.key_left_paren)
-        ")"         -> stringResource(R.string.key_right_paren)
-        "√"         -> stringResource(R.string.key_sqrt)
-        "x²"        -> stringResource(R.string.key_square)
-        "1/x"       -> stringResource(R.string.key_reciprocal)
-        "x!("       -> stringResource(R.string.key_factorial)
-        "π"         -> stringResource(R.string.key_pi)
-        "e"         -> stringResource(R.string.key_eulers_number)
-        "sin"       -> stringResource(R.string.key_sin)
-        "sin⁻¹"     -> stringResource(R.string.key_sin_inverse)
-        "cos"       -> stringResource(R.string.key_cos)
-        "cos⁻¹"     -> stringResource(R.string.key_cos_inverse)
-        "tan"       -> stringResource(R.string.key_tan)
-        "tan⁻¹"     -> stringResource(R.string.key_tan_inverse)
-        else        -> label // fallback for digits/symbols
+        "INV" -> stringResource(R.string.key_inverse)
+        "deg" -> stringResource(R.string.key_degree)
+        "rad" -> stringResource(R.string.key_radian)
+        "^" -> stringResource(R.string.key_power)
+        "lg" -> stringResource(R.string.key_log10)
+        "10ˣ" -> stringResource(R.string.key_exp10)
+        "ln" -> stringResource(R.string.key_ln)
+        "eˣ" -> stringResource(R.string.key_exp)
+        "(" -> stringResource(R.string.key_left_paren)
+        ")" -> stringResource(R.string.key_right_paren)
+        "√" -> stringResource(R.string.key_sqrt)
+        "x²" -> stringResource(R.string.key_square)
+        "1/x" -> stringResource(R.string.key_reciprocal)
+        "x!(" -> stringResource(R.string.key_factorial)
+        "π" -> stringResource(R.string.key_pi)
+        "e" -> stringResource(R.string.key_eulers_number)
+        "sin" -> stringResource(R.string.key_sin)
+        "sin⁻¹" -> stringResource(R.string.key_sin_inverse)
+        "cos" -> stringResource(R.string.key_cos)
+        "cos⁻¹" -> stringResource(R.string.key_cos_inverse)
+        "tan" -> stringResource(R.string.key_tan)
+        "tan⁻¹" -> stringResource(R.string.key_tan_inverse)
+        else -> label // fallback for digits/symbols
     }
 }

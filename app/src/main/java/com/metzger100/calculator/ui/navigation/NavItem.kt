@@ -12,9 +12,9 @@ import com.metzger100.calculator.R
 sealed class NavItem(
     val route: String,
     val icon: ImageVector,
-    @StringRes val labelRes: Int
+    @field:StringRes val labelRes: Int
 ) {
-    object Calculator : NavItem("calculator", Icons.Filled.Calculate, R.string.NavItem_Calculator)
-    object Currency   : NavItem("currency",   Icons.Filled.CurrencyExchange, R.string.NavItem_Currency)
-    object Units      : NavItem("units",      Icons.Filled.Straighten, R.string.NavItem_Units)
+    object Calculator : NavItem("calculator", Icons.Filled.Calculate, R.string.app_name)
+    object Currency : NavItem("currency", Icons.Filled.CurrencyExchange, R.string.NavItem_Currency)
+    object Units : NavItem("units", Icons.Filled.Straighten, R.string.NavItem_Units)
 }

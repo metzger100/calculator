@@ -26,7 +26,8 @@ import com.metzger100.calculator.data.local.entity.UnitHistoryEntity
         CurrencyPrefsEntity::class,
         UnitHistoryEntity::class,
     ],
-    version = 4
+    version = 4,
+    exportSchema = false
 )
 abstract class CalculatorDatabase : RoomDatabase() {
     abstract fun calculationDao(): CalculationDao
@@ -38,7 +39,7 @@ abstract class CalculatorDatabase : RoomDatabase() {
     abstract fun unitHistoryDao(): UnitHistoryDao
 }
 
-val MIGRATION_1_2 = object : Migration(1, 2) {
+val MIGRATION_1_2: Migration = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
         // 1) neue Tabelle anlegen
         db.execSQL(
@@ -67,9 +68,10 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
-val MIGRATION_2_3 = object : Migration(2, 3) {
+val MIGRATION_2_3: Migration = object : Migration(2, 3) {
     override fun migrate(db: SupportSQLiteDatabase) {
-        db.execSQL("""
+        db.execSQL(
+            """
             CREATE TABLE IF NOT EXISTS `currency_history` (
                 `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
                 `amountFrom` TEXT NOT NULL,
@@ -78,11 +80,12 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
                 `currencyTo` TEXT NOT NULL,
                 `timestamp` INTEGER NOT NULL
             )
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 }
 
-val MIGRATION_3_4 = object : Migration(3, 4) {
+val MIGRATION_3_4: Migration = object : Migration(3, 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL(
             """

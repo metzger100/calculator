@@ -1,6 +1,5 @@
 package com.metzger100.calculator
 
-import TopAppBar
 import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -31,6 +30,7 @@ import com.metzger100.calculator.features.currency.viewmodel.CurrencyViewModel
 import com.metzger100.calculator.features.settings.viewmodel.SettingsViewModel
 import com.metzger100.calculator.ui.navigation.BottomNavBar
 import com.metzger100.calculator.ui.navigation.NavGraph
+import com.metzger100.calculator.ui.navigation.TopAppBar
 import com.metzger100.calculator.ui.theme.CalculatorTheme
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
@@ -56,10 +56,10 @@ class MainActivity : ComponentActivity() {
         // Determine which screen to launch
         val dataUri = intent?.data?.toString()
         val startRoute = when (intent?.data?.toString()) {
-            "app://calculator/standard"    -> "calculator"
-            "app://calculator/scientific"  -> "calculator_scientific"
-            "app://calculator/currency"    -> "currency"
-            "app://calculator/units"       -> "units"
+            "app://calculator/standard" -> "calculator"
+            "app://calculator/scientific" -> "calculator_scientific"
+            "app://calculator/currency" -> "currency"
+            "app://calculator/units" -> "units"
             else -> null
         }
         val forceOpenKeyboard = when (dataUri) {
@@ -90,10 +90,10 @@ fun appContent(
     val openKeyboard = forceOpenKeyboard || appSettings!!.openKeyboardOnStart
     val scientific = appSettings!!.scientificOnStart
 
-    CalculatorTheme (themeMode = themeMode) {
+    CalculatorTheme(themeMode = themeMode) {
         val navController = rememberNavController()
-        val CalcViewModel: CalculatorViewModel = hiltViewModel()
-        val CurViewModel: CurrencyViewModel = hiltViewModel()
+        val calcViewModel: CalculatorViewModel = hiltViewModel()
+        val curViewModel: CurrencyViewModel = hiltViewModel()
 
         val navBackStack by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStack?.destination?.route
@@ -120,8 +120,8 @@ fun appContent(
                 || currentRoute == "settings"
 
         val topBarTitle = when (currentRoute) {
-            "settings"   -> stringResource(R.string.Settings_Title)
-            else          -> stringResource(R.string.TopAppBar_Title)
+            "settings" -> stringResource(R.string.Settings_Title)
+            else -> stringResource(R.string.app_name)
         }
 
         Scaffold(
@@ -131,19 +131,19 @@ fun appContent(
                     Snackbar(
                         snackbarData = data,
                         containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                        contentColor   = MaterialTheme.colorScheme.onSurfaceVariant,
-                        actionColor    = MaterialTheme.colorScheme.primary
+                        contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        actionColor = MaterialTheme.colorScheme.primary
                     )
                 }
             },
             topBar = {
                 TopAppBar(
-                    title          = topBarTitle,
+                    title = topBarTitle,
                     showBackButton = showBack,
-                    onBackClick    = { navController.navigateUp() },
-                    onClearHistory = CalcViewModel::clearHistory,
+                    onBackClick = { navController.navigateUp() },
+                    onClearHistory = calcViewModel::clearHistory,
                     onRefreshRates = {
-                        CurViewModel.refreshData()
+                        curViewModel.refreshData()
                         scope.launch {
                             snackbarHostState.showSnackbar(
                                 message = msg,
@@ -166,8 +166,8 @@ fun appContent(
             ) {
                 NavGraph(
                     navController = navController,
-                    calculatorViewModel = CalcViewModel,
-                    currencyViewModel = CurViewModel,
+                    calculatorViewModel = calcViewModel,
+                    currencyViewModel = curViewModel,
                     snackbarHostState = snackbarHostState,
                     scope = scope,
                     openKeyboardOnStart = openKeyboard,

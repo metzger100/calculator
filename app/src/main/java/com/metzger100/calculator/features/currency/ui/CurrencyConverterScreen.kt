@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -74,8 +74,8 @@ fun CurrencyConverterScreen(
 
     // StateFlow → collectAsState()
     val currenciesWithTitles by viewModel.currenciesWithTitles.collectAsState()
-    val rates                   by viewModel.rates.collectAsState()
-    val lastApiDate             by viewModel.lastApiDate.collectAsState()
+    val rates by viewModel.rates.collectAsState()
+    val lastApiDate by viewModel.lastApiDate.collectAsState()
 
     // nur wichtige Währungen
     val filtered by remember(currenciesWithTitles) {
@@ -86,9 +86,9 @@ fun CurrencyConverterScreen(
         }
     }
     val codeList = when {
-        filtered.isNotEmpty()       -> filtered
+        filtered.isNotEmpty() -> filtered
         currenciesWithTitles.isNotEmpty() -> currenciesWithTitles
-        else                        -> listOf("USD" to "US Dollar", "EUR" to "Euro")
+        else -> listOf("USD" to "US Dollar", "EUR" to "Euro")
     }
 
     // short‑Mode Erkennung
@@ -138,29 +138,37 @@ fun CurrencyConverterScreen(
             }
 
             CurrencyRow(
-                currency    = codeList.find { it.first == uiState.currency1 }?.second ?: uiState.currency1,
-                value       = if (uiState.selectedField == 1) uiState.value1 else viewModel.formatNumber(uiState.value1, shortInput2),
-                isSelected  = uiState.selectedField == 1,
-                currencies  = codeList,
+                currency = codeList.find { it.first == uiState.currency1 }?.second
+                    ?: uiState.currency1,
+                value = if (uiState.selectedField == 1) uiState.value1 else viewModel.formatNumber(
+                    uiState.value1,
+                    shortInput2
+                ),
+                isSelected = uiState.selectedField == 1,
+                currencies = codeList,
                 onCurrencySelected = { viewModel.onCurrencyChanged1(it) },
-                onClick     = { viewModel.onSelectField(1) },
+                onClick = { viewModel.onSelectField(1) },
                 snackbarHostState = snackbarHostState,
-                coroutineScope    = coroutineScope,
-                feedbackManager   = feedbackManager,
-                view              = view
+                coroutineScope = coroutineScope,
+                feedbackManager = feedbackManager,
+                view = view
             )
             Spacer(Modifier.height(8.dp))
             CurrencyRow(
-                currency    = codeList.find { it.first == uiState.currency2 }?.second ?: uiState.currency2,
-                value       = if (uiState.selectedField == 2) uiState.value2 else viewModel.formatNumber(uiState.value2, shortInput1),
-                isSelected  = uiState.selectedField == 2,
-                currencies  = codeList,
+                currency = codeList.find { it.first == uiState.currency2 }?.second
+                    ?: uiState.currency2,
+                value = if (uiState.selectedField == 2) uiState.value2 else viewModel.formatNumber(
+                    uiState.value2,
+                    shortInput1
+                ),
+                isSelected = uiState.selectedField == 2,
+                currencies = codeList,
                 onCurrencySelected = { viewModel.onCurrencyChanged2(it) },
-                onClick     = { viewModel.onSelectField(2) },
+                onClick = { viewModel.onSelectField(2) },
                 snackbarHostState = snackbarHostState,
-                coroutineScope    = coroutineScope,
-                feedbackManager   = feedbackManager,
-                view              = view
+                coroutineScope = coroutineScope,
+                feedbackManager = feedbackManager,
+                view = view
             )
             Spacer(Modifier.height(8.dp))
             Box(
@@ -170,7 +178,7 @@ fun CurrencyConverterScreen(
                     .clipToBounds()
             ) {
                 val context = LocalContext.current
-                val textColor   = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+                val textColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
                 val resultColor = MaterialTheme.colorScheme.primary.toArgb()
 
                 AndroidView(
@@ -178,7 +186,11 @@ fun CurrencyConverterScreen(
                         RecyclerView(context).apply {
                             layoutManager =
                                 LinearLayoutManager(context, LinearLayoutManager.VERTICAL, true)
-                            adapter = CurrencyHistoryAdapter(viewModel.numberFormatService, textColor, resultColor)
+                            adapter = CurrencyHistoryAdapter(
+                                viewModel.numberFormatService,
+                                textColor,
+                                resultColor
+                            )
                             clipToPadding = true
                             clipChildren = true
                         }
@@ -195,7 +207,7 @@ fun CurrencyConverterScreen(
 
         ExchangeRateInfo(
             lastApiDate = lastApiDate,
-            modifier    = Modifier
+            modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = keyboardHeight)
         )
@@ -233,9 +245,19 @@ fun CurrencyConverterScreen(
                         amountTo = uiState.value1
                         currencyTo = uiState.currency1
                     }
-                    if (amountFrom.isNotBlank() && amountTo.isNotBlank() && amountFrom != "0" && amountTo != "0") {
+                    if (
+                        amountFrom.isNotBlank() &&
+                        amountTo.isNotBlank() &&
+                        amountFrom != "0" &&
+                        amountTo != "0"
+                    ) {
                         coroutineScope.launch {
-                            viewModel.addToHistory(amountFrom, currencyFrom, amountTo, currencyTo)
+                            viewModel.addToHistory(
+                                amountFrom,
+                                currencyFrom,
+                                amountTo,
+                                currencyTo
+                            )
                         }
                     }
                     viewModel.onValueChange("")
@@ -258,8 +280,8 @@ fun ExchangeRateInfo(
     }
 
     val nowUtcOffset = nowUtc.atOffset(ZoneOffset.UTC)
-    val todayUtc     = nowUtcOffset.toLocalDate()
-    val threshold    = todayUtc.atTime(2,0).atOffset(ZoneOffset.UTC).toInstant()
+    val todayUtc = nowUtcOffset.toLocalDate()
+    val threshold = todayUtc.atTime(2, 0).atOffset(ZoneOffset.UTC).toInstant()
 
     Column(
         modifier = modifier.padding(bottom = 8.dp),
@@ -273,8 +295,10 @@ fun ExchangeRateInfo(
             )
         } else {
             Text(
-                text = stringResource(R.string.exchange_rates_as_of) + " " +
-                        lastApiDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy")),
+                text = stringResource(
+                    R.string.exchange_rates_as_of_value,
+                    lastApiDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                ),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -288,12 +312,12 @@ fun ExchangeRateInfo(
             )
         } else {
             val nextDateUtc = if (nowUtcOffset.hour < 2) todayUtc else todayUtc.plusDays(1)
-            val nextUtcInst = nextDateUtc.atTime(2,0).atOffset(ZoneOffset.UTC).toInstant()
-            val nextLocal  = nextUtcInst.atZone(ZoneId.systemDefault())
+            val nextUtcInst = nextDateUtc.atTime(2, 0).atOffset(ZoneOffset.UTC).toInstant()
+            val nextLocal = nextUtcInst.atZone(ZoneId.systemDefault())
                 .toLocalDateTime()
                 .format(DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm"))
             Text(
-                text = stringResource(R.string.next_rates_update) + " " + nextLocal,
+                text = stringResource(R.string.next_rates_update_value, nextLocal),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -314,7 +338,7 @@ private fun CurrencyRow(
     feedbackManager: FeedbackManager,
     view: View
 ) {
-    var showDialog by remember { mutableStateOf(false) }
+    val showDialog = remember { mutableStateOf(false) }
     val borderModifier = if (isSelected) {
         Modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
     } else Modifier
@@ -393,7 +417,7 @@ private fun CurrencyRow(
                             .onSizeChanged { labelWidthPx = it.width }
                             .clickable {
                                 feedbackManager.provideFeedback(view)
-                                showDialog = true
+                                showDialog.value = true
                             }
                             .semantics { contentDescription = changeCurrencyDesc }
                     )
@@ -448,7 +472,7 @@ private fun CurrencyRow(
                                 .onSizeChanged { labelWidthPx = it.width }
                                 .clickable {
                                     feedbackManager.provideFeedback(view)
-                                    showDialog = true
+                                    showDialog.value = true
                                 }
                                 .semantics { contentDescription = changeCurrencyDesc }
                         )
@@ -460,7 +484,12 @@ private fun CurrencyRow(
                                     feedbackManager.provideFeedback(view)
                                     coroutineScope.launch {
                                         clipboard.setClipEntry(
-                                            ClipEntry(ClipData.newPlainText("Currency Value", value))
+                                            ClipEntry(
+                                                ClipData.newPlainText(
+                                                    "Currency Value",
+                                                    value
+                                                )
+                                            )
                                         )
                                         snackbarHostState.showSnackbar(
                                             message = snackDesc,
@@ -492,14 +521,14 @@ private fun CurrencyRow(
         }
     }
 
-    if (showDialog) {
+    if (showDialog.value) {
         CurrencySelectorDialogRV(
             currencies = currencies,
             onCurrencySelected = {
+                showDialog.value = false
                 onCurrencySelected(it)
-                showDialog = false
             },
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { showDialog.value = false },
             feedbackManager = feedbackManager
         )
     }
@@ -535,7 +564,10 @@ fun CurrencySelectorDialogRV(
                         RecyclerView(context).apply {
                             layoutManager = LinearLayoutManager(context)
                             adapter = object : RecyclerView.Adapter<CurrencyViewHolder>() {
-                                override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CurrencyViewHolder {
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ): CurrencyViewHolder {
                                     val linearLayout = LinearLayout(context).apply {
                                         orientation = LinearLayout.HORIZONTAL
                                         layoutParams = ViewGroup.LayoutParams(
@@ -544,7 +576,7 @@ fun CurrencySelectorDialogRV(
                                         )
                                     }
                                     val textView = TextView(context).apply {
-                                        setPadding(32,24,32,24)
+                                        setPadding(32, 24, 32, 24)
                                         textSize = 16f
                                         setTextColor(textColor.toArgb())
                                         layoutParams = ViewGroup.LayoutParams(
@@ -555,8 +587,12 @@ fun CurrencySelectorDialogRV(
                                     linearLayout.addView(textView)
                                     return CurrencyViewHolder(linearLayout)
                                 }
+
                                 override fun getItemCount() = currencies.size
-                                override fun onBindViewHolder(holder: CurrencyViewHolder, position: Int) {
+                                override fun onBindViewHolder(
+                                    holder: CurrencyViewHolder,
+                                    position: Int
+                                ) {
                                     val (code, title) = currencies[position]
                                     val linearLayout = holder.itemView as LinearLayout
                                     val textView = linearLayout.getChildAt(0) as TextView
@@ -641,11 +677,16 @@ private class CurrencyHistoryAdapter(
         }.getOrDefault(true)
 
         val fromFmt = nfs.formatNumber(e.amountFrom, shortMode, inputLine = false)
-        val toFmt   = nfs.formatNumber(e.amountTo  , shortMode, inputLine = false)
+        val toFmt = nfs.formatNumber(e.amountTo, shortMode, inputLine = false)
 
         holder.lineTv.setTextColor(resultColor)          // same blue as calculator
-        holder.lineTv.text = "${e.currencyFrom}: $fromFmt  →  " +
-                "${e.currencyTo}: $toFmt"
+        holder.lineTv.text = holder.lineTv.context.getString(
+            R.string.conversion_history_entry,
+            e.currencyFrom,
+            fromFmt,
+            e.currencyTo,
+            toFmt
+        )
     }
 }
 

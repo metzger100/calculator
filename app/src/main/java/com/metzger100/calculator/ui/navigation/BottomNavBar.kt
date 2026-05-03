@@ -41,7 +41,7 @@ fun BottomNavBar(navController: NavController) {
                                 saveState = true                 // keep state of other tabs
                             }
                             launchSingleTop = true
-                            restoreState   = true
+                            restoreState = true
                         }
                     }
                 },

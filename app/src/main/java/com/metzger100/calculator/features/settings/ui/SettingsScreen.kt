@@ -32,13 +32,13 @@ fun SettingsScreen(
             .padding(16.dp)
     ) {
         Text(
-            text   = stringResource(R.string.Settings_ThemeTitle),
-            style  = MaterialTheme.typography.titleMedium
+            text = stringResource(R.string.Settings_ThemeTitle),
+            style = MaterialTheme.typography.titleMedium
         )
         Spacer(Modifier.height(8.dp))
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
-            colors   = CardDefaults.elevatedCardColors(
+            colors = CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {
@@ -48,7 +48,7 @@ fun SettingsScreen(
                         .fillMaxWidth()
                         .selectable(
                             selected = (mode == option),
-                            onClick  = { viewModel.onThemeSelected(option) }
+                            onClick = { viewModel.onThemeSelected(option) }
                         )
                         .padding(horizontal = 20.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -57,14 +57,14 @@ fun SettingsScreen(
                     Text(
                         text = when (option) {
                             ThemeMode.SYSTEM -> stringResource(R.string.Settings_ThemeSystem)
-                            ThemeMode.LIGHT  -> stringResource(R.string.Settings_ThemeLight)
-                            ThemeMode.DARK   -> stringResource(R.string.Settings_ThemeDark)
+                            ThemeMode.LIGHT -> stringResource(R.string.Settings_ThemeLight)
+                            ThemeMode.DARK -> stringResource(R.string.Settings_ThemeDark)
                         },
                         style = MaterialTheme.typography.bodyLarge
                     )
                     RadioButton(
                         selected = (mode == option),
-                        onClick  = null
+                        onClick = null
                     )
                 }
                 if (index < ThemeMode.entries.toTypedArray().lastIndex) {
@@ -75,13 +75,13 @@ fun SettingsScreen(
 
         Spacer(Modifier.height(24.dp))
         Text(
-            text   = stringResource(R.string.Settings_BehaviorOptions),
-            style  = MaterialTheme.typography.titleMedium
+            text = stringResource(R.string.Settings_BehaviorOptions),
+            style = MaterialTheme.typography.titleMedium
         )
         Spacer(Modifier.height(8.dp))
         ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
-            colors   = CardDefaults.elevatedCardColors(
+            colors = CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surfaceVariant
             )
         ) {

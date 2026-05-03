@@ -1,3 +1,5 @@
+package com.metzger100.calculator.ui.navigation
+
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -58,7 +60,10 @@ fun TopAppBar(
                 feedbackManager.provideFeedback(view)
                 menuExpanded = true
             }) {
-                Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.TopAppBar_Menu))
+                Icon(
+                    Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.TopAppBar_Menu)
+                )
             }
             DropdownMenu(
                 expanded = menuExpanded,
@@ -96,7 +101,7 @@ fun TopAppBar(
                     }
                 )
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.TopAppBar_Settings)) },
+                    text = { Text(stringResource(R.string.Settings_Title)) },
                     onClick = {
                         feedbackManager.provideFeedback(view)
                         onOpenSettings()
@@ -105,7 +110,7 @@ fun TopAppBar(
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.TopAppBar_Settings)
+                            contentDescription = stringResource(R.string.Settings_Title)
                         )
                     }
                 )

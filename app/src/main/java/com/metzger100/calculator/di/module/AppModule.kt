@@ -7,8 +7,6 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
-import com.metzger100.calculator.data.ConnectivityObserver
-import com.metzger100.calculator.data.repository.CalculationRepository
 import com.metzger100.calculator.data.local.database.CalculatorDatabase
 import com.metzger100.calculator.data.local.dao.CalculationDao
 import com.metzger100.calculator.data.local.dao.CurrencyHistoryDao
@@ -19,8 +17,6 @@ import com.metzger100.calculator.data.local.dao.UnitHistoryDao
 import com.metzger100.calculator.data.local.database.MIGRATION_1_2
 import com.metzger100.calculator.data.local.database.MIGRATION_2_3
 import com.metzger100.calculator.data.local.database.MIGRATION_3_4
-import com.metzger100.calculator.data.repository.SettingsRepository
-import com.metzger100.calculator.data.repository.UnitHistoryRepository
 import com.metzger100.calculator.di.IoDispatcher
 import com.metzger100.calculator.di.SettingsDataStore
 import dagger.Module
@@ -58,11 +54,6 @@ object AppModule {
     }
 
     @Provides
-    fun provideRepository(dao: CalculationDao): CalculationRepository {
-        return CalculationRepository(dao)
-    }
-
-    @Provides
     fun provideCurrencyDao(db: CalculatorDatabase): CurrencyRateDao =
         db.currencyRateDao()
 
@@ -78,10 +69,6 @@ object AppModule {
     fun provideUnitHistoryDao(db: CalculatorDatabase): UnitHistoryDao =
         db.unitHistoryDao()
 
-    @Provides
-    fun provideUnitHistoryRepository(dao: UnitHistoryDao): UnitHistoryRepository =
-        UnitHistoryRepository(dao)
-
     @IoDispatcher
     @Provides
     fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
@@ -96,12 +83,6 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideConnectivityObserver(
-        @ApplicationContext context: Context
-    ): ConnectivityObserver = ConnectivityObserver(context)
-
-    @Provides
-    @Singleton
     @SettingsDataStore
     fun provideSettingsDataStore(
         @ApplicationContext ctx: Context
@@ -109,10 +90,4 @@ object AppModule {
         PreferenceDataStoreFactory.create(
             produceFile = { ctx.preferencesDataStoreFile("user_settings") }
         )
-
-    @Provides
-    @Singleton
-    fun provideSettingsRepository(
-        @SettingsDataStore ds: DataStore<Preferences>
-    ) = SettingsRepository(ds)
 }

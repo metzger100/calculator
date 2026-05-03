@@ -21,7 +21,13 @@ fun ScientificKeyboard(
     val buttonSpacing = 6.dp
 
     val buttons = listOf(
-        listOf("INV", if (isDegreeMode) "deg" else "rad", if (inverse) "sin⁻¹" else "sin", if (inverse) "cos⁻¹" else "cos", if (inverse) "tan⁻¹" else "tan"),
+        listOf(
+            "INV",
+            if (isDegreeMode) "deg" else "rad",
+            if (inverse) "sin⁻¹" else "sin",
+            if (inverse) "cos⁻¹" else "cos",
+            if (inverse) "tan⁻¹" else "tan"
+        ),
         listOf("^", if (inverse) "10ˣ" else "lg", if (inverse) "eˣ" else "ln", "(", ")"),
         listOf(if (inverse) "x²" else "√", "C", "←", "%", "÷"),
         listOf("x!(", "7", "8", "9", "×"),
@@ -97,6 +103,7 @@ fun mapScientificSymbol(symbol: String, isDegreeMode: Boolean): String {
                 else -> symbol
             }
         }
+
         else -> { // Rad-Modus: trigonometrische Funktionen mit "R" für Radians umwandeln
             when (symbol) {
                 "÷" -> "/"

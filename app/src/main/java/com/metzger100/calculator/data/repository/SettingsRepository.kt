@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.metzger100.calculator.di.SettingsDataStore
 import com.metzger100.calculator.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -18,13 +19,14 @@ private val SCIENTIFIC_ON_START = booleanPreferencesKey("scientific_on_start")
 
 @Singleton
 class SettingsRepository @Inject constructor(
+    @param:SettingsDataStore
     private val dataStore: DataStore<Preferences>
 ) {
     val themeModeFlow: Flow<ThemeMode> = dataStore.data.map { pref ->
         when (pref[THEME_MODE]) {
-            ThemeMode.LIGHT.name  -> ThemeMode.LIGHT
-            ThemeMode.DARK.name   -> ThemeMode.DARK
-            else                  -> ThemeMode.SYSTEM
+            ThemeMode.LIGHT.name -> ThemeMode.LIGHT
+            ThemeMode.DARK.name -> ThemeMode.DARK
+            else -> ThemeMode.SYSTEM
         }
     }
 
@@ -50,9 +52,11 @@ class SettingsRepository @Inject constructor(
     suspend fun setThemeMode(mode: ThemeMode) {
         dataStore.edit { it[THEME_MODE] = mode.name }
     }
+
     suspend fun setOpenKeyboardOnStart(value: Boolean) {
         dataStore.edit { it[OPEN_KEYBOARD_ON_START] = value }
     }
+
     suspend fun setScientificOnStart(value: Boolean) {
         dataStore.edit { it[SCIENTIFIC_ON_START] = value }
     }

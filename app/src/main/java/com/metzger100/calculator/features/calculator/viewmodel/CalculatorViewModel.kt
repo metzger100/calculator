@@ -2,8 +2,8 @@ package com.metzger100.calculator.features.calculator.viewmodel
 
 import android.app.Application
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -54,14 +54,14 @@ class CalculatorViewModel @Inject constructor(
     val numberFormatService: NumberFormatService,
     private val application: Application
 ) : ViewModel() {
+    companion object {
+        private const val TAG = "CalculatorViewModel"
+    }
 
-    var history by mutableStateOf(listOf<CalculationEntity>())
+    var history: List<CalculationEntity> by mutableStateOf(emptyList())
         private set
 
-    var uiState by mutableStateOf(CalculatorUiState())
-        private set
-
-    var forceRefresh by mutableStateOf(false)
+    var uiState: CalculatorUiState by mutableStateOf(CalculatorUiState())
         private set
 
     private var lastResult: String? = null
@@ -79,6 +79,12 @@ class CalculatorViewModel @Inject constructor(
         shortMode: Boolean,
         inputLine: Boolean
     ): String = numberFormatService.formatNumber(input, shortMode, inputLine)
+
+    private inline fun debugLog(message: () -> String) {
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, message())
+        }
+    }
 
     fun onCursorChange(requestedPos: Int) {
         val trimmedPos = requestedPos.coerceIn(0, uiState.input.length)
@@ -118,19 +124,19 @@ class CalculatorViewModel @Inject constructor(
 
         val newTokens = uiState.tokens.map { token ->
             when (token) {
-                "SIN("   -> if (newIsDeg) "SIN("  else "SINR("
-                "COS("   -> if (newIsDeg) "COS("  else "COSR("
-                "TAN("   -> if (newIsDeg) "TAN("  else "TANR("
-                "ASIN("  -> if (newIsDeg) "ASIN(" else "ASINR("
-                "ACOS("  -> if (newIsDeg) "ACOS(" else "ACOSR("
-                "ATAN("  -> if (newIsDeg) "ATAN(" else "ATANR("
-                "SINR("  -> if (newIsDeg) "SIN("  else "SINR("
-                "COSR("  -> if (newIsDeg) "COS("  else "COSR("
-                "TANR("  -> if (newIsDeg) "TAN("  else "TANR("
+                "SIN(" -> if (newIsDeg) "SIN(" else "SINR("
+                "COS(" -> if (newIsDeg) "COS(" else "COSR("
+                "TAN(" -> if (newIsDeg) "TAN(" else "TANR("
+                "ASIN(" -> if (newIsDeg) "ASIN(" else "ASINR("
+                "ACOS(" -> if (newIsDeg) "ACOS(" else "ACOSR("
+                "ATAN(" -> if (newIsDeg) "ATAN(" else "ATANR("
+                "SINR(" -> if (newIsDeg) "SIN(" else "SINR("
+                "COSR(" -> if (newIsDeg) "COS(" else "COSR("
+                "TANR(" -> if (newIsDeg) "TAN(" else "TANR("
                 "ASINR(" -> if (newIsDeg) "ASIN(" else "ASINR("
                 "ACOSR(" -> if (newIsDeg) "ACOS(" else "ACOSR("
                 "ATANR(" -> if (newIsDeg) "ATAN(" else "ATANR("
-                else       -> token
+                else -> token
             }
         }
         val newInput = newTokens.joinToString("")
@@ -160,7 +166,11 @@ class CalculatorViewModel @Inject constructor(
 
 
     fun toggleMode() {
-        val newMode = if (uiState.mode == CalculatorMode.STANDARD) CalculatorMode.SCIENTIFIC else CalculatorMode.STANDARD
+        val newMode = if (uiState.mode == CalculatorMode.STANDARD) {
+            CalculatorMode.SCIENTIFIC
+        } else {
+            CalculatorMode.STANDARD
+        }
         uiState = uiState.copy(mode = newMode)
     }
 
@@ -170,7 +180,8 @@ class CalculatorViewModel @Inject constructor(
 
     // Insert token at cursor, splitting tokens if needed
     fun onInput(token: String) {
-        // Start from either the current tokens/cursor or an "ANS" seed if we were showing the bare result.
+        // Start from either the current tokens/cursor or an "ANS" seed.
+        // This keeps follow-up input consistent after showing the bare last result.
         var workingTokens = uiState.tokens.toMutableList()
         var pos = uiState.cursor
 
@@ -276,19 +287,18 @@ class CalculatorViewModel @Inject constructor(
         viewModelScope.launch {
             repository.clearHistory()
             history = emptyList()
-            forceRefresh = !forceRefresh
         }
     }
 
     fun calculate() {
         try {
-            Log.d("CalculatorViewModel", "Calculating: ${uiState.input}")
+            debugLog { "Calculating: ${uiState.input}" }
             if (!validateExpression(uiState.input)) {
                 uiState = uiState.copy(preview = application.getString(R.string.Calculator_Error))
                 return
             }
             val config = buildConfig()
-            val ansBefore = lastResult // for history rendering
+            val ansBefore = lastResult
             val expandedInput = expandAns(uiState.input)
 
             val expr = BigMathExpression(expandedInput, config)
@@ -296,17 +306,23 @@ class CalculatorViewModel @Inject constructor(
             if (result != null) {
                 val resultStr = BigDecimal(result.toString()).stripTrailingZeros().toPlainString()
 
-                // history should show the concrete expression (ANS replaced with its value at time of eval)
-                val historyInput =
-                    if (uiState.input.contains("ANS")) uiState.input.replace("ANS", ansBefore ?: "0")
-                    else uiState.input
+                // History should show the concrete expression with ANS expanded.
+                val historyInput = if (uiState.input.contains("ANS")) {
+                    uiState.input.replace(
+                        "ANS",
+                        ansBefore ?: "0"
+                    )
+                } else {
+                    uiState.input
+                }
 
                 viewModelScope.launch {
                     repository.insert(historyInput, resultStr)
                     history = repository.getHistory()
                 }
 
-                val containsAns = uiState.tokens.any { it == "ANS" } || uiState.input.contains("ANS")
+                val containsAns =
+                    uiState.tokens.any { it == "ANS" } || uiState.input.contains("ANS")
 
                 if (containsAns) {
                     lastResult = resultStr
@@ -325,13 +341,13 @@ class CalculatorViewModel @Inject constructor(
                     )
                 }
 
-                Log.d("CalculatorViewModel", "Result: $resultStr")
+                debugLog { "Result: $resultStr" }
             } else {
                 uiState = uiState.copy(tokens = listOf("0"), cursor = 1, input = "0", preview = "")
             }
         } catch (e: Exception) {
             uiState = uiState.copy(preview = application.getString(R.string.Calculator_Error))
-            Log.e("CalculatorViewModel", "Error during calculate")
+            Log.e(TAG, "Error during calculate", e)
         }
     }
 
@@ -346,7 +362,7 @@ class CalculatorViewModel @Inject constructor(
             expr.evaluate().numberValue
                 ?.toString()
                 ?.let { formatResult(it) } ?: ""
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             application.getString(R.string.Calculator_Error)
         }
     }
@@ -380,41 +396,40 @@ class CalculatorViewModel @Inject constructor(
 
     /** Prüft, ob der gesamte Ausdruck in allen reellen Domains gültig ist. */
     private fun validateExpression(input: String, isDeg: Boolean = uiState.isDegree): Boolean {
-        val tag = "CalculatorViewModel"
-        Log.d(tag, "validateExpression: checking input=\"$input\"")
+        debugLog { "validateExpression: checking input=\"$input\"" }
 
-        val expanded = expandAns(input)   // NEW
+        val expanded = expandAns(input)
         val config = buildConfig()
 
         if (expanded.trim() == "0^0") {
-            Log.w(tag, "Invalid: 0^0 is undefined")
+            Log.w(TAG, "Invalid: 0^0 is undefined")
             return false
         }
 
         if (!validateFactorials(expanded, config)) {
-            Log.w(tag, "Invalid: factorial validation failed")
+            Log.w(TAG, "Invalid: factorial validation failed")
             return false
         }
 
         if (!validateTanDomain(expanded, config, isDeg)) {
-            Log.w(tag, "Invalid: tangent domain validation failed")
+            Log.w(TAG, "Invalid: tangent domain validation failed")
             return false
         }
 
-        if (!validateUnaryDomain(expanded, "SQRT", BigDecimal.ZERO, allowEqual = true, config)) {
-            Log.w(tag, "Invalid: square root domain validation failed")
+        if (!validateUnaryDomain(expanded, "SQRT", allowEqual = true, config)) {
+            Log.w(TAG, "Invalid: square root domain validation failed")
             return false
         }
-        if (!validateUnaryDomain(expanded, "LOG", BigDecimal.ZERO, allowEqual = false, config)) {
-            Log.w(tag, "Invalid: LOG argument must be greater than 0")
+        if (!validateUnaryDomain(expanded, "LOG", allowEqual = false, config)) {
+            Log.w(TAG, "Invalid: LOG argument must be greater than 0")
             return false
         }
-        if (!validateUnaryDomain(expanded, "LOG10", BigDecimal.ZERO, allowEqual = false, config)) {
-            Log.w(tag, "Invalid: LOG10 argument must be greater than 0")
+        if (!validateUnaryDomain(expanded, "LOG10", allowEqual = false, config)) {
+            Log.w(TAG, "Invalid: LOG10 argument must be greater than 0")
             return false
         }
 
-        Log.d(tag, "validateExpression: input is valid")
+        debugLog { "validateExpression: input is valid" }
         return true
     }
 
@@ -447,7 +462,6 @@ class CalculatorViewModel @Inject constructor(
     private fun validateUnaryDomain(
         input: String,
         functionName: String,
-        bound: BigDecimal,
         allowEqual: Boolean,
         config: ExpressionConfiguration
     ): Boolean {
@@ -458,9 +472,9 @@ class CalculatorViewModel @Inject constructor(
                 return false
             }
             if (allowEqual) {
-                if (v < bound) return false
+                if (v < BigDecimal.ZERO) return false
             } else {
-                if (v <= bound) return false
+                if (v <= BigDecimal.ZERO) return false
             }
         }
         return true
@@ -491,7 +505,8 @@ class CalculatorViewModel @Inject constructor(
         while (true) {
             val idx = expr.indexOf("FACT(")
             if (idx == -1) break
-            var open = 1; var pos = idx + 5
+            var open = 1
+            var pos = idx + 5
             while (pos < expr.length && open > 0) {
                 when (expr[pos]) {
                     '(' -> open++

@@ -30,10 +30,16 @@ class CurrencyRepository @Inject constructor(
     private val listDao: CurrencyListDao,
     private val prefsDao: CurrencyPrefsDao,
     private val httpClient: HttpClient,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+    @param:IoDispatcher private val ioDispatcher: CoroutineDispatcher
 ) {
     private val gson = Gson()
-    private val TAG = "CurrencyRepository"
+    private val tag = "CurrencyRepository"
+
+    private inline fun debugLog(message: () -> String) {
+        if (Log.isLoggable(tag, Log.DEBUG)) {
+            Log.d(tag, message())
+        }
+    }
 
     /**
      * Liefert einen Flow<Map<CurrencyCode, Rate>>, der
@@ -48,19 +54,19 @@ class CurrencyRepository @Inject constructor(
         base: String,
         isOnline: Boolean = true
     ): Flow<Map<String, Double>> = flow {
-        Log.d(TAG, "getRatesFlow(base=$base, isOnline=$isOnline) START")
+        debugLog { "getRatesFlow(base=$base, isOnline=$isOnline) START" }
 
         // 1) Cache auslesen und emitten
         val cachedEntity = runCatching { rateDao.get(base) }
-            .onFailure { Log.e(TAG, "getRatesFlow: DB read failed", it) }
+            .onFailure { Log.e(tag, "getRatesFlow: DB read failed", it) }
             .getOrNull()
         val cachedJson = cachedEntity?.json
         val cachedRates = if (cachedJson != null) {
             parseRates(cachedJson, base).also {
-                Log.d(TAG, "getRatesFlow: Emit cached rates (${it.size} entries)")
+                debugLog { "getRatesFlow: Emit cached rates (${it.size} entries)" }
             }
         } else {
-            Log.d(TAG, "getRatesFlow: No cache available → emit emptyMap()")
+            debugLog { "getRatesFlow: No cache available -> emit emptyMap()" }
             emptyMap()
         }
         emit(cachedRates)
@@ -71,37 +77,50 @@ class CurrencyRepository @Inject constructor(
         val shouldRefresh = cachedJson == null
                 || (nowUtc.hour >= 2 && cachedDate != nowUtc.toLocalDate())
 
-        Log.d(TAG, "getRatesFlow: shouldRefresh=$shouldRefresh (cache=${cachedJson == null}, date=${(nowUtc.hour >= 2 && cachedDate != nowUtc.toLocalDate())})")
+        debugLog {
+            "getRatesFlow: shouldRefresh=$shouldRefresh " +
+                    "(cache=${cachedJson == null}, " +
+                    "date=${nowUtc.hour >= 2 && cachedDate != nowUtc.toLocalDate()})"
+        }
 
         if (shouldRefresh) {
             // 3) Netzwerk-Fetch (+ Upsert)
             if (isOnline) {
                 try {
-                    Log.d(TAG, "getRatesFlow: Online → start fetchRatesJson()")
+                    debugLog { "getRatesFlow: Online -> start fetchRatesJson()" }
                     val fresh = fetchRatesJson(base)
                     if (fresh.isNotBlank() && fresh != "{}") {
-                        Log.d(TAG, "getRatesFlow: Received fresh data (${fresh.length} characters), upserting…")
+                        debugLog {
+                            "getRatesFlow: Received fresh data " +
+                                    "(${fresh.length} characters), upserting..."
+                        }
                         runCatching {
-                            rateDao.upsert(CurrencyRateEntity(base, fresh, System.currentTimeMillis()))
+                            rateDao.upsert(
+                                CurrencyRateEntity(
+                                    base,
+                                    fresh,
+                                    System.currentTimeMillis()
+                                )
+                            )
                         }.onFailure {
-                            Log.e(TAG, "getRatesFlow: DB upsert failed", it)
+                            Log.e(tag, "getRatesFlow: DB upsert failed", it)
                         }
                     } else {
-                        Log.w(TAG, "getRatesFlow: Empty result from API → Fallback to cache")
+                        Log.w(tag, "getRatesFlow: Empty result from API -> fallback to cache")
                         cachedJson ?: "{}"
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "getRatesFlow: Error during fetch → Fallback to cache")
+                    Log.e(tag, "getRatesFlow: Error during fetch -> fallback to cache", e)
                     cachedJson ?: "{}"
                 }
             } else {
-                Log.w(TAG, "getRatesFlow: Offline and refresh required → Fallback to cache")
+                Log.w(tag, "getRatesFlow: Offline and refresh required -> fallback to cache")
                 cachedJson ?: "{}"
             }
 
             // 4) Aktualisierte DB erneut auslesen und emitten
             val updatedEntity = runCatching { rateDao.get(base) }
-                .onFailure { Log.e(TAG, "getRatesFlow: DB read failed", it) }
+                .onFailure { Log.e(tag, "getRatesFlow: DB read failed", it) }
                 .getOrNull()
             val updatedJson = updatedEntity?.json
             val updatedRates = if (updatedJson != null) {
@@ -109,14 +128,14 @@ class CurrencyRepository @Inject constructor(
             } else emptyMap()
 
             if (updatedRates != cachedRates) {
-                Log.d(TAG, "getRatesFlow: Emit updated rates (${updatedRates.size} entries)")
+                debugLog { "getRatesFlow: Emit updated rates (${updatedRates.size} entries)" }
                 emit(updatedRates)
             } else {
-                Log.d(TAG, "getRatesFlow: No change to cached rates")
+                debugLog { "getRatesFlow: No change to cached rates" }
             }
         }
 
-        Log.d(TAG, "getRatesFlow END")
+        debugLog { "getRatesFlow END" }
     }.flowOn(ioDispatcher)
 
     /**
@@ -128,19 +147,19 @@ class CurrencyRepository @Inject constructor(
     fun getCurrenciesFlow(
         isOnline: Boolean = true
     ): Flow<List<Pair<String, String>>> = flow {
-        Log.d(TAG, "getCurrenciesFlow(isOnline=$isOnline) START")
+        debugLog { "getCurrenciesFlow(isOnline=$isOnline) START" }
 
         // 1) Cache
         val cachedEntity = runCatching { listDao.get() }
-            .onFailure { Log.e(TAG, "getCurrenciesFlow: DB read failed", it) }
+            .onFailure { Log.e(tag, "getCurrenciesFlow: DB read failed", it) }
             .getOrNull()
         val cachedJson = cachedEntity?.json
         val cachedList = if (cachedJson != null) {
             parseCurrencies(cachedJson).also {
-                Log.d(TAG, "getCurrenciesFlow: Emit cached list (${it.size} entries)")
+                debugLog { "getCurrenciesFlow: Emit cached list (${it.size} entries)" }
             }
         } else {
-            Log.d(TAG, "getCurrenciesFlow: No Cache → emit emptyList()")
+            debugLog { "getCurrenciesFlow: No cache -> emit emptyList()" }
             emptyList()
         }
         emit(cachedList)
@@ -153,48 +172,60 @@ class CurrencyRepository @Inject constructor(
         val shouldRefresh = cachedEntity == null
                 || (nowUtc.hour >= 2 && cacheDate != nowUtc.toLocalDate())
 
-        Log.d(TAG, "getCurrenciesFlow: shouldRefresh=$shouldRefresh (cache=${cachedEntity == null}, date=${(nowUtc.hour >= 2 && cacheDate != nowUtc.toLocalDate())})")
+        debugLog {
+            "getCurrenciesFlow: shouldRefresh=$shouldRefresh " +
+                    "(cache=${cachedEntity == null}, " +
+                    "date=${nowUtc.hour >= 2 && cacheDate != nowUtc.toLocalDate()})"
+        }
 
         if (shouldRefresh) {
             // 3) Fetch & Upsert
             if (isOnline) {
                 try {
-                    Log.d(TAG, "getCurrenciesFlow: Online → fetchCurrenciesJson() starten")
+                    debugLog { "getCurrenciesFlow: Online -> start fetchCurrenciesJson()" }
                     val fresh = fetchCurrenciesJson()
                     if (fresh.isNotBlank() && fresh != "{}") {
-                        Log.d(TAG, "getCurrenciesFlow: Received fresh list (${fresh.length} characters), upserting...")
+                        debugLog {
+                            "getCurrenciesFlow: Received fresh list " +
+                                    "(${fresh.length} characters), upserting..."
+                        }
                         runCatching {
-                            listDao.upsert(CurrencyListEntity(json = fresh, timestamp = System.currentTimeMillis()))
+                            listDao.upsert(
+                                CurrencyListEntity(
+                                    json = fresh,
+                                    timestamp = System.currentTimeMillis()
+                                )
+                            )
                         }.onFailure {
-                            Log.e(TAG, "getCurrenciesFlow: DB upsert failed", it)
+                            Log.e(tag, "getCurrenciesFlow: DB upsert failed", it)
                         }
                     } else {
-                        Log.w(TAG, "getCurrenciesFlow: Empty result from API → Fallback to cache")
+                        Log.w(tag, "getCurrenciesFlow: Empty result from API -> fallback to cache")
                         cachedJson ?: "{}"
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "getCurrenciesFlow: Error during fetch → Fallback to cache")
+                    Log.e(tag, "getCurrenciesFlow: Error during fetch -> fallback to cache", e)
                     cachedJson ?: "{}"
                 }
             } else {
-                Log.w(TAG, "getCurrenciesFlow: Offline and refresh required → Fallback to cache")
+                Log.w(tag, "getCurrenciesFlow: Offline and refresh required -> fallback to cache")
                 cachedJson ?: "{}"
             }
 
             // 4) Emit aktualisiert
             val updatedJson = runCatching { listDao.get()?.json }
-                .onFailure { Log.e(TAG, "getCurrenciesFlow: DB read (updated) failed", it) }
+                .onFailure { Log.e(tag, "getCurrenciesFlow: DB read (updated) failed", it) }
                 .getOrNull()
             val updatedList = updatedJson?.let(::parseCurrencies) ?: emptyList()
             if (updatedList != cachedList) {
-                Log.d(TAG, "getCurrenciesFlow: Emit updated list (${updatedList.size} entries)")
+                debugLog { "getCurrenciesFlow: Emit updated list (${updatedList.size} entries)" }
                 emit(updatedList)
             } else {
-                Log.d(TAG, "getCurrenciesFlow: No change to the cached list")
+                debugLog { "getCurrenciesFlow: No change to the cached list" }
             }
         }
 
-        Log.d(TAG, "getCurrenciesFlow END")
+        debugLog { "getCurrenciesFlow END" }
     }.flowOn(ioDispatcher)
 
     // ----------------------------------------
@@ -207,13 +238,13 @@ class CurrencyRepository @Inject constructor(
             val root = gson.fromJson(rawJson, JsonObject::class.java)
             val key = base.lowercase()
             if (!root.has(key) || root.getAsJsonObject(key) == null) {
-                Log.w(TAG, "parseRates: No field '$key' in JSON, returning emptyMap()")
+                Log.w(tag, "parseRates: No field '$key' in JSON, returning emptyMap()")
                 return emptyMap()
             }
             val ratesObj = root.getAsJsonObject(key)
             ratesObj.entrySet().associate { it.key to it.value.asDouble }
         } catch (e: Exception) {
-            Log.e(TAG, "parseRates: JSON parsing failed")
+            Log.e(tag, "parseRates: JSON parsing failed", e)
             emptyMap()
         }
     }
@@ -224,7 +255,7 @@ class CurrencyRepository @Inject constructor(
             .get("date").asString
             .let(LocalDate::parse)
     } catch (e: Exception) {
-        Log.e(TAG, "extractDate: JSON parsing failed")
+        Log.e(tag, "extractDate: JSON parsing failed", e)
         null
     }
 
@@ -236,7 +267,7 @@ class CurrencyRepository @Inject constructor(
                 .map { it.key.uppercase() to it.value.asString }
                 .sortedBy { it.first }
         } catch (e: Exception) {
-            Log.e(TAG, "parseCurrencies: JSON parsing failed")
+            Log.e(tag, "parseCurrencies: JSON parsing failed", e)
             emptyList()
         }
     }
@@ -252,43 +283,57 @@ class CurrencyRepository @Inject constructor(
         // Phase 1: jsDelivr mit Datumstag
         runCatching {
             val versionTag = "${todayUtc.year}.${todayUtc.monthValue}.${todayUtc.dayOfMonth}"
-            val url = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@$versionTag/v1/currencies/$lower.json"
-            Log.d(TAG, "fetchRatesJson[1]: Trying jsDelivr date=$versionTag: $url")
+            val url =
+                buildString {
+                    append("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@")
+                    append(versionTag)
+                    append("/v1/currencies/")
+                    append(lower)
+                    append(".json")
+                }
+            debugLog { "fetchRatesJson[1]: Trying jsDelivr date=$versionTag: $url" }
             val body = httpClient.get(url).bodyAsText()
             if (!body.contains("Couldn't find the requested release version")) {
-                Log.d(TAG, "fetchRatesJson[1]: Success")
+                debugLog { "fetchRatesJson[1]: Success" }
                 return body
             }
-            Log.d(TAG, "fetchRatesJson[1]: Not available yet")
+            debugLog { "fetchRatesJson[1]: Not available yet" }
         }.onFailure {
-            Log.w(TAG, "fetchRatesJson[1]: Error, will try pages.dev", it)
+            Log.w(tag, "fetchRatesJson[1]: Error, will try pages.dev", it)
         }
 
         // Phase 2: pages.dev mit yyyy-MM-dd
         runCatching {
             val dateTag = todayUtc.toString()
-            val url = "https://$dateTag.currency-api.pages.dev/v1/currencies/$lower.json"
-            Log.d(TAG, "fetchRatesJson[2]: Trying pages.dev date=$dateTag: $url")
+            val url =
+                "https://$dateTag.currency-api.pages.dev/v1/currencies/$lower.json"
+            debugLog { "fetchRatesJson[2]: Trying pages.dev date=$dateTag: $url" }
             val body = httpClient.get(url).bodyAsText()
             if (!body.contains("<h1")) {
-                Log.d(TAG, "fetchRatesJson[2]: Success")
+                debugLog { "fetchRatesJson[2]: Success" }
                 return body
             }
-            Log.d(TAG, "fetchRatesJson[2]: Not ready yet")
+            debugLog { "fetchRatesJson[2]: Not ready yet" }
         }.onFailure {
-            Log.w(TAG, "fetchRatesJson[2]: Error, will try @latest", it)
+            Log.w(tag, "fetchRatesJson[2]: Error, will try @latest", it)
         }
 
         // Phase 3: @latest
         runCatching {
-            val url = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/$lower.json"
-            Log.d(TAG, "fetchRatesJson[3]: Trying @latest: $url")
+            val url =
+                buildString {
+                    append("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest")
+                    append("/v1/currencies/")
+                    append(lower)
+                    append(".json")
+                }
+            debugLog { "fetchRatesJson[3]: Trying @latest: $url" }
             return httpClient.get(url).bodyAsText()
         }.onFailure {
-            Log.e(TAG, "fetchRatesJson[3]: @latest fetch failed", it)
+            Log.e(tag, "fetchRatesJson[3]: @latest fetch failed", it)
         }
 
-        Log.e(TAG, "fetchRatesJson: All attempts failed → returning empty JSON")
+        Log.e(tag, "fetchRatesJson: All attempts failed → returning empty JSON")
         return "{}"
     }
 
@@ -298,43 +343,53 @@ class CurrencyRepository @Inject constructor(
         // Phase 1: jsDelivr mit Datumstag
         runCatching {
             val versionTag = "${todayUtc.year}.${todayUtc.monthValue}.${todayUtc.dayOfMonth}"
-            val url = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@$versionTag/v1/currencies.min.json"
-            Log.d(TAG, "fetchCurrenciesJson[1]: Trying jsDelivr date=$versionTag: $url")
+            val url =
+                buildString {
+                    append("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@")
+                    append(versionTag)
+                    append("/v1/currencies.min.json")
+                }
+            debugLog { "fetchCurrenciesJson[1]: Trying jsDelivr date=$versionTag: $url" }
             val body = httpClient.get(url).bodyAsText()
             if (!body.contains("Couldn't find the requested release version")) {
-                Log.d(TAG, "fetchCurrenciesJson[1]: Success")
+                debugLog { "fetchCurrenciesJson[1]: Success" }
                 return body
             }
-            Log.d(TAG, "fetchCurrenciesJson[1]: Not available yet")
+            debugLog { "fetchCurrenciesJson[1]: Not available yet" }
         }.onFailure {
-            Log.w(TAG, "fetchCurrenciesJson[1]: Error, will try pages.dev", it)
+            Log.w(tag, "fetchCurrenciesJson[1]: Error, will try pages.dev", it)
         }
 
         // Phase 2: pages.dev mit yyyy-MM-dd
         runCatching {
             val dateTag = todayUtc.toString()
-            val url = "https://$dateTag.currency-api.pages.dev/v1/currencies.min.json"
-            Log.d(TAG, "fetchCurrenciesJson[2]: Trying pages.dev date=$dateTag: $url")
+            val url =
+                "https://$dateTag.currency-api.pages.dev/v1/currencies.min.json"
+            debugLog { "fetchCurrenciesJson[2]: Trying pages.dev date=$dateTag: $url" }
             val body = httpClient.get(url).bodyAsText()
             if (!body.contains("<h1")) {
-                Log.d(TAG, "fetchCurrenciesJson[2]: Success")
+                debugLog { "fetchCurrenciesJson[2]: Success" }
                 return body
             }
-            Log.d(TAG, "fetchCurrenciesJson[2]: Not ready yet")
+            debugLog { "fetchCurrenciesJson[2]: Not ready yet" }
         }.onFailure {
-            Log.w(TAG, "fetchCurrenciesJson[2]: Error, will try @latest", it)
+            Log.w(tag, "fetchCurrenciesJson[2]: Error, will try @latest", it)
         }
 
         // Phase 3: @latest
         runCatching {
-            val url = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies.min.json"
-            Log.d(TAG, "fetchCurrenciesJson[3]: Trying @latest: $url")
+            val url =
+                buildString {
+                    append("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest")
+                    append("/v1/currencies.min.json")
+                }
+            debugLog { "fetchCurrenciesJson[3]: Trying @latest: $url" }
             return httpClient.get(url).bodyAsText()
         }.onFailure {
-            Log.e(TAG, "fetchCurrenciesJson[3]: @latest fetch failed", it)
+            Log.e(tag, "fetchCurrenciesJson[3]: @latest fetch failed", it)
         }
 
-        Log.e(TAG, "fetchCurrenciesJson: All attempts failed → returning empty JSON")
+        Log.e(tag, "fetchCurrenciesJson: All attempts failed → returning empty JSON")
         return "{}"
     }
 
@@ -347,20 +402,22 @@ class CurrencyRepository @Inject constructor(
      * das "date"-Feld und gibt es als LocalDate zurück (oder null).
      */
     suspend fun getLastApiDateForBase(base: String): LocalDate? = withContext(ioDispatcher) {
-        Log.d(TAG, "getLastApiDateForBase: loading cache for base=$base")
+        debugLog { "getLastApiDateForBase: loading cache for base=$base" }
         val rawJson = runCatching { rateDao.get(base)?.json }
-            .onFailure { Log.e(TAG, "getLastApiDateForBase: DB read failed", it) }
+            .onFailure { Log.e(tag, "getLastApiDateForBase: DB read failed", it) }
             .getOrNull()
 
-        rawJson?.let {
+        rawJson?.let { json ->
             runCatching {
-                gson.fromJson(it, JsonObject::class.java)
+                gson.fromJson(json, JsonObject::class.java)
                     .get("date").asString
                     .let(LocalDate::parse)
             }.onFailure {
-                Log.e(TAG, "getLastApiDateForBase: parse failed", it)
+                Log.e(tag, "getLastApiDateForBase: parse failed", it)
             }.getOrNull()
-        }.also { Log.d(TAG, "getLastApiDateForBase: result = $it") }
+        }.also { result ->
+            debugLog { "getLastApiDateForBase: result = $result" }
+        }
     }
 
     // ----------------------------------------
@@ -368,15 +425,15 @@ class CurrencyRepository @Inject constructor(
     // ----------------------------------------
 
     suspend fun getPrefs(): CurrencyPrefsEntity? = withContext(ioDispatcher) {
-        Log.d(TAG, "getPrefs()")
+        debugLog { "getPrefs()" }
         runCatching { prefsDao.get() }
-            .onFailure { Log.e(TAG, "getPrefs: DB read failed", it) }
+            .onFailure { Log.e(tag, "getPrefs: DB read failed", it) }
             .getOrNull()
     }
 
-    suspend fun savePrefs(prefs: CurrencyPrefsEntity) = withContext(ioDispatcher) {
-        Log.d(TAG, "savePrefs(prefs=$prefs)")
+    suspend fun savePrefs(prefs: CurrencyPrefsEntity): Result<Unit> = withContext(ioDispatcher) {
+        debugLog { "savePrefs(prefs=$prefs)" }
         runCatching { prefsDao.upsert(prefs) }
-            .onFailure { Log.e(TAG, "savePrefs: DB upsert failed", it) }
+            .onFailure { Log.e(tag, "savePrefs: DB upsert failed", it) }
     }
 }

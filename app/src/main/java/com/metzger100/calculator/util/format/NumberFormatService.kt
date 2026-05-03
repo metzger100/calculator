@@ -34,7 +34,7 @@ data class FormatWithCursorMappingResult(
 @Singleton
 class NumberFormatService @Inject constructor() {
 
-    private val smallRegex = Regex("""^(-?)0*\.((?:0){5,})(\d+)$""")
+    private val smallRegex = Regex("""^(?<sign>-?)0*\.(?<zeros>0{5,})(?<digits>\d+)$""")
     private val lower = BigDecimal("0.001")
     private val upper = BigDecimal("1000000000")
 
@@ -55,7 +55,7 @@ class NumberFormatService @Inject constructor() {
         // 1) Try to parse as number or early return
         val bigDec = try {
             BigDecimal(input)
-        } catch (e: NumberFormatException) {
+        } catch (_: NumberFormatException) {
             val base = input.ifEmpty { "0" }
             return replaceOperatorsOrMap(base, withMapping = false) as String
         }
@@ -65,11 +65,11 @@ class NumberFormatService @Inject constructor() {
 
         // 3) Special case: Many leading zeros after decimal point → exponential format
         smallRegex.matchEntire(input)?.let { m ->
-            val sign      = m.groupValues[1]
-            val zeroCount = m.groupValues[2].length
-            val digits    = m.groupValues[3]
-            val exponent  = -(zeroCount + 1)
-            val mantissa  = if (digits.length > 1)
+            val sign = m.groups["sign"]?.value.orEmpty()
+            val zeroCount = m.groups["zeros"]?.value?.length ?: 0
+            val digits = m.groups["digits"]?.value.orEmpty()
+            val exponent = -(zeroCount + 1)
+            val mantissa = if (digits.length > 1)
                 "${digits[0]}.${digits.substring(1)}"
             else
                 digits
@@ -106,10 +106,10 @@ class NumberFormatService @Inject constructor() {
         bd: BigDecimal
     ): String {
         val absBd = bd.abs()
-        val norm  = bd.stripTrailingZeros()
-        val prec  = norm.precision()
+        val norm = bd.stripTrailingZeros()
+        val prec = norm.precision()
         val scale = norm.scale()
-        val exp   = prec - scale - 1
+        val exp = prec - scale - 1
         val unscaled = norm.unscaledValue().abs().toString()
 
         val useSci = ((absBd < lower && exp >= 6) || (absBd > upper && scale < 0))
@@ -131,10 +131,10 @@ class NumberFormatService @Inject constructor() {
     /** Groups integer part in blocks of three, leaves decimals unchanged */
     private fun groupIntegerPart(orig: String): String {
         val negative = orig.startsWith("-")
-        val parts    = orig.trimStart('-').split('.', limit = 2)
-        val intPart  = parts[0].ifEmpty { "0" }
-        val frac     = parts.getOrNull(1)
-        val grouped  = intPart.reversed().chunked(3).joinToString(" ").reversed()
+        val parts = orig.trimStart('-').split('.', limit = 2)
+        val intPart = parts[0].ifEmpty { "0" }
+        val frac = parts.getOrNull(1)
+        val grouped = intPart.reversed().chunked(3).joinToString(" ").reversed()
 
         return buildString {
             if (negative) append('-')
@@ -146,8 +146,8 @@ class NumberFormatService @Inject constructor() {
     /** Converts an integer exponent to unicode superscript, e.g., -6 → ⁻⁶ */
     private fun toSuperscript(exp: Int): String {
         val sup = mapOf(
-            '0' to '⁰','1' to '¹','2' to '²','3' to '³','4' to '⁴',
-            '5' to '⁵','6' to '⁶','7' to '⁷','8' to '⁸','9' to '⁹','-' to '⁻'
+            '0' to '⁰', '1' to '¹', '2' to '²', '3' to '³', '4' to '⁴',
+            '5' to '⁵', '6' to '⁶', '7' to '⁷', '8' to '⁸', '9' to '⁹', '-' to '⁻'
         )
         return exp.toString().map { sup[it] ?: it }.joinToString("")
     }

@@ -3,11 +3,13 @@ package com.metzger100.calculator.data
 import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ConnectivityObserver @Inject constructor(
+    @param:ApplicationContext
     private val context: Context
 ) {
     fun isOnline(): Boolean {

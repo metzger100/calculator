@@ -60,7 +60,8 @@ fun UnitConverterScreen(
     val uiState by viewModel::uiState
     val feedbackManager = FeedbackManager.rememberFeedbackManager()
     val view = LocalView.current
-    val context = LocalContext.current
+    val fromUnitLabel = stringResource(uiState.fromUnit.nameRes)
+    val toUnitLabel = stringResource(uiState.toUnit.nameRes)
 
     BoxWithConstraints(
         Modifier
@@ -75,13 +76,13 @@ fun UnitConverterScreen(
                 .padding(bottom = keyboardHeight)
         ) {
             UnitRow(
-                labelRes       = uiState.fromUnit.nameRes,
-                value          = uiState.fromValue,
-                isSel          = (uiState.selectedField == 1),
-                units          = viewModel.availableUnits,
+                labelRes = uiState.fromUnit.nameRes,
+                value = uiState.fromValue,
+                isSel = (uiState.selectedField == 1),
+                units = viewModel.availableUnits,
                 onUnitSelected = viewModel::onFromUnitChanged,
-                onClick        = { viewModel.onSelectField(1) },
-                formatNumber   = { str, short -> viewModel.formatNumber(str, short) },
+                onClick = { viewModel.onSelectField(1) },
+                formatNumber = { str, short -> viewModel.formatNumber(str, short) },
                 snackbarHostState = snackbarHostState,
                 coroutineScope = coroutineScope,
                 feedbackManager = feedbackManager,
@@ -89,13 +90,13 @@ fun UnitConverterScreen(
             )
             Spacer(Modifier.height(8.dp))
             UnitRow(
-                labelRes       = uiState.toUnit.nameRes,
-                value          = uiState.toValue,
-                isSel          = (uiState.selectedField == 2),
-                units          = viewModel.availableUnits,
+                labelRes = uiState.toUnit.nameRes,
+                value = uiState.toValue,
+                isSel = (uiState.selectedField == 2),
+                units = viewModel.availableUnits,
                 onUnitSelected = viewModel::onToUnitChanged,
-                onClick        = { viewModel.onSelectField(2) },
-                formatNumber   = { str, short -> viewModel.formatNumber(str, short) },
+                onClick = { viewModel.onSelectField(2) },
+                formatNumber = { str, short -> viewModel.formatNumber(str, short) },
                 snackbarHostState = snackbarHostState,
                 coroutineScope = coroutineScope,
                 feedbackManager = feedbackManager,
@@ -110,7 +111,7 @@ fun UnitConverterScreen(
                     .clipToBounds()
             ) {
                 val ctx = LocalContext.current
-                val textColor   = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
+                val textColor = MaterialTheme.colorScheme.onSurfaceVariant.toArgb()
                 val resultColor = MaterialTheme.colorScheme.primary.toArgb()
 
                 AndroidView(
@@ -146,34 +147,40 @@ fun UnitConverterScreen(
         ) {
             UnitConverterKeyboard(
                 onInput = { label ->
-                    val current = if (uiState.selectedField == 1) uiState.fromValue else uiState.toValue
+                    val current =
+                        if (uiState.selectedField == 1) uiState.fromValue else uiState.toValue
                     viewModel.onValueChange(current + label)
                 },
                 onClear = { viewModel.onValueChange("") },
                 onBack = {
-                    val current = if (uiState.selectedField == 1) uiState.fromValue else uiState.toValue
+                    val current =
+                        if (uiState.selectedField == 1) uiState.fromValue else uiState.toValue
                     if (current.isNotEmpty()) viewModel.onValueChange(current.dropLast(1))
                 },
                 onEquals = {
                     val (fromV, fromU, toV, toU) =
                         if (uiState.selectedField == 1)
-                            arrayOf(uiState.fromValue,
-                                context.getString(uiState.fromUnit.nameRes),
-                                uiState.toValue,
-                                context.getString(uiState.toUnit.nameRes))
-                        else
-                            arrayOf(uiState.toValue,
-                                context.getString(uiState.toUnit.nameRes),
+                            arrayOf(
                                 uiState.fromValue,
-                                context.getString(uiState.fromUnit.nameRes))
+                                fromUnitLabel,
+                                uiState.toValue,
+                                toUnitLabel
+                            )
+                        else
+                            arrayOf(
+                                uiState.toValue,
+                                toUnitLabel,
+                                uiState.fromValue,
+                                fromUnitLabel
+                            )
 
                     if (fromV.isNotBlank() && toV.isNotBlank() && fromV != "0" && toV != "0") {
                         coroutineScope.launch {
                             viewModel.addToHistory(
                                 fromValue = fromV,
-                                fromUnit  = fromU,
-                                toValue   = toV,
-                                toUnit    = toU
+                                fromUnit = fromU,
+                                toValue = toV,
+                                toUnit = toU
                             )
                         }
                     }
@@ -198,9 +205,13 @@ fun UnitRow(
     feedbackManager: FeedbackManager,
     view: View
 ) {
-    var show by remember { mutableStateOf(false) }
+    val show = remember { mutableStateOf(false) }
     val borderM =
-        if (isSel) Modifier.border(2.dp, MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
+        if (isSel) Modifier.border(
+            2.dp,
+            MaterialTheme.colorScheme.primary,
+            MaterialTheme.shapes.medium
+        )
         else Modifier
 
     val clipboard = LocalClipboard.current
@@ -270,10 +281,12 @@ fun UnitRow(
                         text = unitLabel,
                         fontSize = 18.sp,
                         modifier = Modifier
-                            .onSizeChanged { labelWidthPx = it.width } // measure label width for next pass
+                            .onSizeChanged {
+                                labelWidthPx = it.width
+                            } // measure label width for next pass
                             .clickable {
                                 feedbackManager.provideFeedback(view)
-                                show = true
+                                show.value = true
                             }
                             .semantics { contentDescription = changeUnitDesc }
                     )
@@ -326,7 +339,7 @@ fun UnitRow(
                                 .onSizeChanged { labelWidthPx = it.width }
                                 .clickable {
                                     feedbackManager.provideFeedback(view)
-                                    show = true
+                                    show.value = true
                                 }
                                 .semantics { contentDescription = changeUnitDesc }
                         )
@@ -370,14 +383,14 @@ fun UnitRow(
         }
     }
 
-    if (show) {
+    if (show.value) {
         UnitSelectorDialogRV(
             units = units,
             onUnitSelected = {
+                show.value = false
                 onUnitSelected(it)
-                show = false
             },
-            onDismissRequest = { show = false },
+            onDismissRequest = { show.value = false },
             feedbackManager = feedbackManager
         )
     }
@@ -410,7 +423,10 @@ fun UnitSelectorDialogRV(
                         RecyclerView(context).apply {
                             layoutManager = LinearLayoutManager(context)
                             adapter = object : RecyclerView.Adapter<UnitViewHolder>() {
-                                override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UnitViewHolder {
+                                override fun onCreateViewHolder(
+                                    parent: ViewGroup,
+                                    viewType: Int
+                                ): UnitViewHolder {
                                     val textView = TextView(context).apply {
                                         setPadding(32, 24, 32, 24)
                                         textSize = 18f
@@ -422,15 +438,20 @@ fun UnitSelectorDialogRV(
                                     }
                                     return UnitViewHolder(textView)
                                 }
+
                                 override fun getItemCount() = units.size
-                                override fun onBindViewHolder(holder: UnitViewHolder, position: Int) {
+                                override fun onBindViewHolder(
+                                    holder: UnitViewHolder,
+                                    position: Int
+                                ) {
                                     val unit = units[position]
                                     val unitName = holder.textView.context.getString(unit.nameRes)
                                     holder.textView.text = unitName
 
-                                    holder.textView.contentDescription = holder.textView.context.getString(
-                                        R.string.select_unit_content_description, unitName
-                                    )
+                                    holder.textView.contentDescription =
+                                        holder.textView.context.getString(
+                                            R.string.select_unit_content_description, unitName
+                                        )
 
                                     holder.itemView.setOnClickListener { v ->
                                         feedbackManager.provideFeedback(v, sound = false)
@@ -504,9 +525,15 @@ private class UnitHistoryAdapter(
             .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
 
         val fromFmt = format(e.fromValue, false)
-        val toFmt   = format(e.toValue,   false)
+        val toFmt = format(e.toValue, false)
 
-        holder.lineTv.text = "${e.fromUnit}: $fromFmt  →  ${e.toUnit}: $toFmt"
+        holder.lineTv.text = holder.lineTv.context.getString(
+            R.string.conversion_history_entry,
+            e.fromUnit,
+            fromFmt,
+            e.toUnit,
+            toFmt
+        )
     }
 }
 

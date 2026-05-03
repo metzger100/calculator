@@ -12,7 +12,7 @@ object UnitConverterConstants {
 
     /** Unit definition with name resource and factor to base unit */
     data class UnitDef(
-        @StringRes val nameRes: Int,
+        @field:StringRes val nameRes: Int,
         val factorToBase: BigDecimal
     )
 
@@ -96,7 +96,8 @@ object UnitConverterConstants {
             UnitDef(R.string.UnitConvCatArea_SquareMile, BigDecimal("2.589988110336e6"))
         ),
 
-        // TEMPERATURE (Celsius/Kelvin then Fahrenheit/Rankine) (no base -> calculation in UnitConverterViewModel.convert())
+        // TEMPERATURE (Celsius/Kelvin then Fahrenheit/Rankine)
+        // no base -> calculation in UnitConverterViewModel.convert()
         "Temperature" to listOf(
             UnitDef(R.string.UnitConvCatTemperature_Celsius, BigDecimal("1.0")),
             UnitDef(R.string.UnitConvCatTemperature_Kelvin, BigDecimal("1.0")),
@@ -203,7 +204,8 @@ object UnitConverterConstants {
             UnitDef(R.string.UnitConvCatData_Exbibyte, BigDecimal("9223372036854775808.0"))
         ),
 
-        // FUEL ECONOMY (special-case conversion L/100km ↔ mpg) (no base -> calculation in UnitConverterViewModel.convert())
+        // FUEL ECONOMY (special-case conversion L/100km ↔ mpg)
+        // no base -> calculation in UnitConverterViewModel.convert()
         "FuelEconomy" to listOf(
             UnitDef(R.string.UnitConvCatFuelEconomy_LitersPer100km, BigDecimal("1.0")),
             UnitDef(R.string.UnitConvCatFuelEconomy_MPG_US, BigDecimal("235.214583")),

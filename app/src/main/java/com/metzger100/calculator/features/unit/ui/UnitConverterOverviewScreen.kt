@@ -57,20 +57,56 @@ fun UnitConverterOverviewScreen(
     val feedbackManager = FeedbackManager.rememberFeedbackManager()
     val view = LocalView.current
     val categories = listOf(
-        UnitCategory("Length", stringResource(R.string.UnitConvCat_Length), Icons.Default.Straighten),
-        UnitCategory("Weight", stringResource(R.string.UnitConvCat_Weight), Icons.Default.FitnessCenter),
-        UnitCategory("Volume", stringResource(R.string.UnitConvCat_Volume), Icons.Default.LocalDrink),
+        UnitCategory(
+            "Length",
+            stringResource(R.string.UnitConvCat_Length),
+            Icons.Default.Straighten
+        ),
+        UnitCategory(
+            "Weight",
+            stringResource(R.string.UnitConvCat_Weight),
+            Icons.Default.FitnessCenter
+        ),
+        UnitCategory(
+            "Volume",
+            stringResource(R.string.UnitConvCat_Volume),
+            Icons.Default.LocalDrink
+        ),
         UnitCategory("Area", stringResource(R.string.UnitConvCat_Area), Icons.Default.CropSquare),
-        UnitCategory("Temperature", stringResource(R.string.UnitConvCat_Temperature), Icons.Default.Thermostat),
+        UnitCategory(
+            "Temperature",
+            stringResource(R.string.UnitConvCat_Temperature),
+            Icons.Default.Thermostat
+        ),
         UnitCategory("Time", stringResource(R.string.UnitConvCat_Time), Icons.Default.AccessTime),
-        UnitCategory("Speed", stringResource(R.string.UnitConvCat_Speed),Icons.Default.Speed),
+        UnitCategory("Speed", stringResource(R.string.UnitConvCat_Speed), Icons.Default.Speed),
         UnitCategory("Energy", stringResource(R.string.UnitConvCat_Energy), Icons.Default.FlashOn),
-        UnitCategory("Power", stringResource(R.string.UnitConvCat_Power), Icons.Default.PowerSettingsNew),
-        UnitCategory("Pressure", stringResource(R.string.UnitConvCat_Pressure), Icons.Default.Opacity),
-        UnitCategory("Frequency", stringResource(R.string.UnitConvCat_Frequency), Icons.Default.Tune),
+        UnitCategory(
+            "Power",
+            stringResource(R.string.UnitConvCat_Power),
+            Icons.Default.PowerSettingsNew
+        ),
+        UnitCategory(
+            "Pressure",
+            stringResource(R.string.UnitConvCat_Pressure),
+            Icons.Default.Opacity
+        ),
+        UnitCategory(
+            "Frequency",
+            stringResource(R.string.UnitConvCat_Frequency),
+            Icons.Default.Tune
+        ),
         UnitCategory("Data", stringResource(R.string.UnitConvCat_Data), Icons.Default.Storage),
-        UnitCategory("FuelEconomy", stringResource(R.string.UnitConvCat_FuelEconomy), Icons.Default.LocalGasStation),
-        UnitCategory("PlaneAngle", stringResource(R.string.UnitConvCat_PlaneAngle), Icons.AutoMirrored.Filled.Undo),
+        UnitCategory(
+            "FuelEconomy",
+            stringResource(R.string.UnitConvCat_FuelEconomy),
+            Icons.Default.LocalGasStation
+        ),
+        UnitCategory(
+            "PlaneAngle",
+            stringResource(R.string.UnitConvCat_PlaneAngle),
+            Icons.AutoMirrored.Filled.Undo
+        ),
         UnitCategory("Amount", stringResource(R.string.UnitConvCat_Amount), Icons.Default.Science)
     )
 

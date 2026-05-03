@@ -1,10 +1,12 @@
-#  Material You Calculator
+<!--suppress LongLine -->
 
-<p align="center">
-  <img src="svg/ic_logo.svg" alt="Calculator Logo" width="128" />
-</p>
+# Material You Calculator
 
-An elegant, Android-native calculator and currency converter app, built with **Jetpack Compose** and styled using **Material You** (Monet) theming. The app adapts dynamically to your system colors and offers a clean, modern experience for daily calculations and conversions.
+![Calculator Logo](svg/ic_logo.svg)
+
+An elegant, Android-native calculator and currency converter app, built with **Jetpack Compose** and
+styled using **Material You** (Monet) theming. The app adapts dynamically to your system colors and
+offers a clean, modern experience for daily calculations and conversions.
 
 ---
 
@@ -18,19 +20,23 @@ An elegant, Android-native calculator and currency converter app, built with **J
 
   ⚠️ Note:  
   Exchange rates are updated only once per day (02:00 UTC).  
-  All conversions are based on USD as an intermediate currency, which may cause minor rounding differences for certain pairs.
+  All conversions are based on USD as an intermediate currency, which may cause minor rounding
+  differences for certain pairs.
 
 - 🧳 **Unit Converter Tab**  
-  Convert between various units such as length, weight, temperature, and more with optimized keypads and a clear interface.
+  Convert between various units such as length, weight, temperature, and more with optimized keypads
+  and a clear interface.
 
 - 🎨 **Material You Support**  
-  Adapts to your system’s dynamic color palette (Monet), including light/dark themes and accent coloring.
+  Adapts to your system’s dynamic color palette (Monet), including light/dark themes and accent
+  coloring.
 
 - 💾 **Calculation History**  
   View and clear previous operations in a neat list, persisted across app restarts via Room.
 
 - ☁️ **Offline Caching**  
-  Exchange rates and history are cached locally (Room/DataStore) for offline use — fresh data is fetched once a day.
+  Exchange rates and history are cached locally (Room/DataStore) for offline use — fresh data is
+  fetched once a day.
 
 - ⌨️ **Custom Keypads**  
   Separate numeric/math keypad for the calculator and currency converter for optimized input.
@@ -49,13 +55,13 @@ An elegant, Android-native calculator and currency converter app, built with **J
 
 ## 🛠️ Tech Stack
 
-- **Kotlin**  
-- **Jetpack Compose** for UI  
-- **Hilt** for Dependency Injection  
-- **MVVM** architecture  
-- **Room** for local database  
-- **Ktor** HTTP client  
-- **Gson** for JSON parsing  
+- **Kotlin**
+- **Jetpack Compose** for UI
+- **Hilt** for Dependency Injection
+- **MVVM** architecture
+- **Room** for local database
+- **Ktor** HTTP client
+- **Gson** for JSON parsing
 - **Material Design 3 (Material You)**
 
 ---
@@ -64,9 +70,9 @@ An elegant, Android-native calculator and currency converter app, built with **J
 
 ### Prerequisites
 
-- Android Studio Electric/Eiger or newer  
-- Android SDK 33+  
-- Kotlin 1.9+  
+- Android Studio Electric/Eiger or newer
+- Android SDK 33+
+- Kotlin 1.9+
 
 ### Clone the repo
 
@@ -78,8 +84,6 @@ cd calculator
 ### Run the app
 
 Open the project in Android Studio, let Gradle sync, then click **Run**.
-
-⚠️ Note: You might have to switch to "Project Files"-View and exclude /svg to avoid errors with the code analysis
 
 ---
 
@@ -129,7 +133,8 @@ com.metzger100.calculator
 │   │   ├── ui                  # UI components for the Currency Converter
 │   │   │   ├── CurrencyConverterScreen.kt
 │   │   │   ├── CurrencyConverterKeyboard.kt
-│   │   │   └── CurrencyConverterConstants.kt    # Constants for Available Currencies in Converter UI
+│   │   │   └── CurrencyConverterConstants.kt
+│   │   │      # Constants for available currencies in the converter UI
 │   │   └── viewmodel           # ViewModel for the Currency Converter
 │   │       └── CurrencyViewModel.kt
 │   ├── unit                    # Unit Converter feature
@@ -174,7 +179,8 @@ GNU AFFERO GENERAL PUBLIC LICENSE Version 3
 ---
 
 ## 🙌 Credits
- 
-- Exchange rate data provided by [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api)
+
+- Exchange rate data provided
+  by [fawazahmed0/exchange-api](https://github.com/fawazahmed0/exchange-api)
 
 Feel free to contribute by submitting issues or pull requests!

@@ -25,7 +25,8 @@ interface UnitHistoryDao {
     @Query("SELECT COUNT(*) FROM unit_history WHERE category = :category")
     suspend fun getCountByCategory(category: String): Int
 
-    @Query("""
+    @Query(
+        """
         DELETE FROM unit_history
         WHERE id IN (
             SELECT id FROM unit_history
@@ -33,7 +34,8 @@ interface UnitHistoryDao {
             ORDER BY id ASC
             LIMIT :count
         )
-    """)
+    """
+    )
     suspend fun deleteOldestInCategory(category: String, count: Int)
 
     @Query("SELECT * FROM unit_history WHERE category = :category ORDER BY id DESC")

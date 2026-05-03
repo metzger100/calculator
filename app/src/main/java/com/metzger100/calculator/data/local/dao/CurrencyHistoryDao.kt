@@ -24,7 +24,12 @@ interface CurrencyHistoryDao {
     @Query("SELECT COUNT(*) FROM currency_history")
     suspend fun getCount(): Int
 
-    @Query("DELETE FROM currency_history WHERE id IN (SELECT id FROM currency_history ORDER BY id ASC LIMIT :count)")
+    @Query(
+        "DELETE FROM currency_history " +
+                "WHERE id IN (" +
+                "SELECT id FROM currency_history ORDER BY id ASC LIMIT :count" +
+                ")"
+    )
     suspend fun deleteOldestEntries(count: Int)
 
     @Query("SELECT * FROM currency_history ORDER BY id DESC") // newest first

@@ -12,10 +12,10 @@ fun CalculatorTheme(
     content: @Composable () -> Unit
 ) {
     val systemDark = isSystemInDarkTheme()
-    val darkTheme  = when (themeMode) {
+    val darkTheme = when (themeMode) {
         ThemeMode.SYSTEM -> systemDark
-        ThemeMode.DARK   -> true
-        ThemeMode.LIGHT  -> false
+        ThemeMode.DARK -> true
+        ThemeMode.LIGHT -> false
     }
 
     val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -29,6 +29,6 @@ fun CalculatorTheme(
     MaterialTheme(
         colorScheme = colorScheme,
         typography = AppTypography,
-        content    = content
+        content = content
     )
 }

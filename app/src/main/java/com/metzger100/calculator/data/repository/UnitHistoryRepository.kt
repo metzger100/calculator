@@ -8,7 +8,7 @@ import javax.inject.Inject
 class UnitHistoryRepository @Inject constructor(
     private val dao: UnitHistoryDao
 ) {
-    private val MaxPerCategory = 25
+    private val maxPerCategory = 25
 
     suspend fun insert(
         category: String,
@@ -26,12 +26,9 @@ class UnitHistoryRepository @Inject constructor(
             toUnit = toUnit,
             timestamp = timestamp
         )
-        dao.insertAndTrim(e, MaxPerCategory)
+        dao.insertAndTrim(e, maxPerCategory)
     }
 
     suspend fun getHistory(category: String): List<UnitHistoryEntity> =
         dao.getAllByCategory(category)
-
-    suspend fun clearHistory(category: String) =
-        dao.clearAllByCategory(category)
 }

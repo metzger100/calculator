@@ -40,7 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -144,7 +144,9 @@ fun CalculatorScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
             ) {
                 Box(modifier = Modifier.fillMaxWidth()) {
@@ -178,12 +180,17 @@ fun CalculatorScreen(
                                 .padding(horizontal = 16.dp),
                             horizontalAlignment = Alignment.End
                         ) {
-                            val formatRes = viewModel.numberFormatService.formatNumberWithCursorMapping(
-                                uiState.input
-                            )
+                            val formatRes =
+                                viewModel.numberFormatService.formatNumberWithCursorMapping(
+                                    uiState.input
+                                )
                             val formattedInput = formatRes.formatted
-                            val safeInputCursor = uiState.cursor.coerceIn(0, formatRes.inputToDisplay.size - 1)
-                            val displayCursor = formatRes.inputToDisplay[safeInputCursor].coerceIn(0, formattedInput.length)
+                            val safeInputCursor =
+                                uiState.cursor.coerceIn(0, formatRes.inputToDisplay.size - 1)
+                            val displayCursor = formatRes.inputToDisplay[safeInputCursor].coerceIn(
+                                0,
+                                formattedInput.length
+                            )
 
                             Box(modifier = Modifier.fillMaxWidth()) {
                                 BasicTextField(
@@ -192,8 +199,15 @@ fun CalculatorScreen(
                                         selection = TextRange(displayCursor)
                                     ),
                                     onValueChange = {
-                                        val newDisplayCursor = it.selection.start.coerceIn(0, formatRes.displayToInput.size - 1)
-                                        val newInputCursor = formatRes.displayToInput[newDisplayCursor].coerceIn(0, uiState.input.length)
+                                        val newDisplayCursor = it.selection.start.coerceIn(
+                                            0,
+                                            formatRes.displayToInput.size - 1
+                                        )
+                                        val newInputCursor =
+                                            formatRes.displayToInput[newDisplayCursor].coerceIn(
+                                                0,
+                                                uiState.input.length
+                                            )
                                         viewModel.onCursorChange(newInputCursor)
                                     },
                                     readOnly = true,
@@ -211,15 +225,26 @@ fun CalculatorScreen(
                                         runCatching { textLayout.getCursorRect(displayCursor) }
                                             .getOrNull()
                                             ?.let { cursorRect ->
-                                                val canvasColor = MaterialTheme.colorScheme.onSurface
+                                                val canvasColor =
+                                                    MaterialTheme.colorScheme.onSurface
                                                 val extraOffsetPx = with(LocalDensity.current) {
-                                                    if (displayCursor == formattedInput.length) 2.dp.toPx() else 0f
+                                                    if (displayCursor == formattedInput.length) {
+                                                        2.dp.toPx()
+                                                    } else {
+                                                        0f
+                                                    }
                                                 }
                                                 Canvas(modifier = Modifier.matchParentSize()) {
                                                     drawLine(
                                                         color = canvasColor,
-                                                        start = Offset(cursorRect.left + extraOffsetPx, cursorRect.top),
-                                                        end = Offset(cursorRect.left + extraOffsetPx, cursorRect.bottom),
+                                                        start = Offset(
+                                                            cursorRect.left + extraOffsetPx,
+                                                            cursorRect.top
+                                                        ),
+                                                        end = Offset(
+                                                            cursorRect.left + extraOffsetPx,
+                                                            cursorRect.bottom
+                                                        ),
                                                         strokeWidth = 2.dp.toPx(),
                                                         alpha = blinkAlpha
                                                     )
@@ -231,11 +256,14 @@ fun CalculatorScreen(
                             if (uiState.preview.isNotEmpty()) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "= ${viewModel.formatNumber(
-                                        uiState.preview,
-                                        shortMode = false,
-                                        inputLine = false
-                                    )}",
+                                    text = stringResource(
+                                        R.string.calculation_result_value,
+                                        viewModel.formatNumber(
+                                            uiState.preview,
+                                            shortMode = false,
+                                            inputLine = false
+                                        )
+                                    ),
                                     style = MaterialTheme.typography.headlineMedium,
                                     color = MaterialTheme.colorScheme.primary,
                                     textAlign = TextAlign.End,
@@ -264,7 +292,10 @@ fun CalculatorScreen(
                                                 )
                                             )
                                         )
-                                        snackbarHostState.showSnackbar(snackDesc, withDismissAction = true)
+                                        snackbarHostState.showSnackbar(
+                                            snackDesc,
+                                            withDismissAction = true
+                                        )
                                     }
                                 },
                             ) {
@@ -361,8 +392,12 @@ private class CalculationAdapter(
     override fun getItemCount(): Int = items.size
     override fun onBindViewHolder(holder: CalculationViewHolder, position: Int) {
         val entry = items[position]
-        holder.inputView.text = viewModel.formatNumber(entry.input, shortMode = false, inputLine = false)
-        holder.resultView.text = "= ${viewModel.formatNumber(entry.result, shortMode = false, inputLine = false)}"
+        holder.inputView.text =
+            viewModel.formatNumber(entry.input, shortMode = false, inputLine = false)
+        holder.resultView.text = holder.resultView.context.getString(
+            R.string.calculation_result_value,
+            viewModel.formatNumber(entry.result, shortMode = false, inputLine = false)
+        )
     }
 }
 
@@ -380,6 +415,7 @@ class CalculationDiffCallback(
     override fun getNewListSize(): Int = newList.size
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
         oldList[oldItemPosition].id == newList[newItemPosition].id
+
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean =
         oldList[oldItemPosition] == newList[newItemPosition]
 }

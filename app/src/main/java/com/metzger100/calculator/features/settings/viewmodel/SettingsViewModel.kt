@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.metzger100.calculator.data.repository.SettingsRepository
 import com.metzger100.calculator.ui.theme.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -17,32 +18,40 @@ class SettingsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val themeMode: StateFlow<ThemeMode> =
-        repo.themeModeFlow.stateIn(viewModelScope,
+        repo.themeModeFlow.stateIn(
+            viewModelScope,
             SharingStarted.WhileSubscribed(5_000),
             ThemeMode.SYSTEM
         )
 
     val openKeyboardOnStart: StateFlow<Boolean> =
-        repo.openKeyboardOnStartFlow.stateIn(viewModelScope,
-            SharingStarted.WhileSubscribed(5_000), false)
+        repo.openKeyboardOnStartFlow.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000), false
+        )
 
     val scientificOnStart: StateFlow<Boolean> =
-        repo.scientificOnStartFlow.stateIn(viewModelScope,
-            SharingStarted.WhileSubscribed(5_000), false)
+        repo.scientificOnStartFlow.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5_000), false
+        )
 
     // For initial app-wide usage
     val appSettings: StateFlow<SettingsRepository.AppSettings?> =
-        repo.appSettingsFlow.stateIn(viewModelScope,
+        repo.appSettingsFlow.stateIn(
+            viewModelScope,
             SharingStarted.WhileSubscribed(5_000), null
         )
 
-    fun onThemeSelected(mode: ThemeMode) = viewModelScope.launch {
+    fun onThemeSelected(mode: ThemeMode): Job = viewModelScope.launch {
         repo.setThemeMode(mode)
     }
-    fun onOpenKeyboardOnStartChange(value: Boolean) = viewModelScope.launch {
+
+    fun onOpenKeyboardOnStartChange(value: Boolean): Job = viewModelScope.launch {
         repo.setOpenKeyboardOnStart(value)
     }
-    fun onScientificOnStartChange(value: Boolean) = viewModelScope.launch {
+
+    fun onScientificOnStartChange(value: Boolean): Job = viewModelScope.launch {
         repo.setScientificOnStart(value)
     }
 

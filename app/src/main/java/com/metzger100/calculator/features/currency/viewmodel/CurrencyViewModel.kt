@@ -54,8 +54,14 @@ class CurrencyViewModel @Inject constructor(
         private const val FIXED_BASE = "USD"
     }
 
+    private inline fun debugLog(message: () -> String) {
+        if (Log.isLoggable(TAG, Log.DEBUG)) {
+            Log.d(TAG, message())
+        }
+    }
+
     // monolithischer UI‑State
-    var uiState by mutableStateOf(CurrencyUiState())
+    var uiState: CurrencyUiState by mutableStateOf(CurrencyUiState())
         private set
 
     // 4) Refresh-Trigger: bei jeder Erhöhung dieser Zahl feuern wir die Flows neu ab
@@ -97,7 +103,7 @@ class CurrencyViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            Log.d(TAG, "init: START")
+            debugLog { "init: START" }
             // Lade gespeicherte Prefs
             repo.getPrefs()?.let { prefs ->
                 uiState = CurrencyUiState(
@@ -107,7 +113,7 @@ class CurrencyViewModel @Inject constructor(
                     value1 = prefs.amount1,
                     value2 = prefs.amount2
                 )
-                Log.d(TAG, "init: loaded prefs → $uiState")
+                debugLog { "init: loaded prefs -> $uiState" }
             }
             // Erste Initial-Abfrage
             refreshTrigger.update { it + 1 }
@@ -115,7 +121,7 @@ class CurrencyViewModel @Inject constructor(
 
         // 9) Auf jeden neuen Satz von Kursen reagieren:
         viewModelScope.launch {
-            rates.collect { rateMap ->
+            rates.collect {
                 _lastApiDate.value = repo.getLastApiDateForBase(FIXED_BASE)
                 recalc()
             }
@@ -135,12 +141,11 @@ class CurrencyViewModel @Inject constructor(
     private suspend fun savePrefs(state: CurrencyUiState) {
         repo.savePrefs(
             CurrencyPrefsEntity(
-                id          = 1,
                 activeField = state.selectedField,
-                currency1   = state.currency1,
-                currency2   = state.currency2,
-                amount1     = state.value1,
-                amount2     = state.value2
+                currency1 = state.currency1,
+                currency2 = state.currency2,
+                amount1 = state.value1,
+                amount2 = state.value2
             )
         )
     }
@@ -225,7 +230,7 @@ class CurrencyViewModel @Inject constructor(
         val normalized = amount.replace(',', '.')
         val aBD = runCatching { BigDecimal(normalized) }.getOrDefault(BigDecimal.ZERO)
         val fromRate = rates[from.lowercase()]?.let(BigDecimal::valueOf) ?: return "0"
-        val toRate   = rates[to.lowercase()]?.let(BigDecimal::valueOf)   ?: return "0"
+        val toRate = rates[to.lowercase()]?.let(BigDecimal::valueOf) ?: return "0"
         val mc = MathContext(16, RoundingMode.HALF_UP)
         return runCatching {
             aBD.divide(fromRate, mc)
@@ -235,33 +240,32 @@ class CurrencyViewModel @Inject constructor(
         }.getOrDefault("0")
     }
 
-    var currencyHistory by mutableStateOf<List<CurrencyHistoryEntity>>(emptyList())
+    var currencyHistory: List<CurrencyHistoryEntity> by mutableStateOf(emptyList())
         private set
 
     init {
         loadHistory()
     }
 
-    fun loadHistory() {
+    private fun loadHistory() {
         viewModelScope.launch {
             currencyHistory = currencyHistoryRepo.getHistory()
         }
     }
 
     suspend fun addToHistory(
-        amountFrom: String, currencyFrom: String,
-        amountTo: String, currencyTo: String
+        amountFrom: String,
+        currencyFrom: String,
+        amountTo: String,
+        currencyTo: String
     ) {
         currencyHistoryRepo.insert(
-            amountFrom, currencyFrom, amountTo, currencyTo, System.currentTimeMillis()
+            amountFrom,
+            currencyFrom,
+            amountTo,
+            currencyTo,
+            System.currentTimeMillis()
         )
         loadHistory()
-    }
-
-    fun clearCurrencyHistory() {
-        viewModelScope.launch {
-            currencyHistoryRepo.clearHistory()
-            loadHistory()
-        }
     }
 }

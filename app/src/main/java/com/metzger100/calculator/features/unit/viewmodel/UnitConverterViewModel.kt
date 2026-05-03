@@ -51,7 +51,7 @@ class UnitConverterViewModel @Inject constructor(
         UnitConverterConstants.units[category] ?: emptyList()
 
     // 2. Single source of truth für den UI-Zustand
-    var uiState by mutableStateOf(
+    var uiState: UnitConverterUiState by mutableStateOf(
         UnitConverterUiState(
             fromUnit = availableUnits.getOrNull(0)
                 ?: error("Keine Einheiten definiert"),
@@ -62,7 +62,7 @@ class UnitConverterViewModel @Inject constructor(
         private set
 
     // 3) History (per category)
-    var unitHistory by mutableStateOf<List<UnitHistoryEntity>>(emptyList())
+    var unitHistory: List<UnitHistoryEntity> by mutableStateOf(emptyList())
         private set
 
     init {
@@ -95,11 +95,6 @@ class UnitConverterViewModel @Inject constructor(
         loadHistory()
     }
 
-    suspend fun clearUnitHistory() {
-        unitHistoryRepo.clearHistory(category)
-        loadHistory()
-    }
-
     /** Resolve the UI label (string) for a UnitDef using current locale. */
     private fun labelFor(u: UnitDef): String = application.getString(u.nameRes)
 
@@ -113,57 +108,79 @@ class UnitConverterViewModel @Inject constructor(
 
     /** Choose sensible defaults for this category if there is no history yet. */
     private fun defaultUnitsForCategory(): Pair<UnitDef, UnitDef> {
-        // If any of these is missing in availableUnits (shouldn't happen), fall back to first two units.
+        // If one of these is missing in availableUnits, fall back to the first two entries.
         return when (category) {
-            "Length"       -> (pick(R.string.UnitConvCatLength_Meter) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatLength_Foot)  ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Length" -> (pick(R.string.UnitConvCatLength_Meter) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatLength_Foot) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Weight"       -> (pick(R.string.UnitConvCatWeight_Kilogram) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatWeight_Pound)    ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Weight" -> (pick(R.string.UnitConvCatWeight_Kilogram) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatWeight_Pound) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Volume"       -> (pick(R.string.UnitConvCatVolume_Liter)     ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatVolume_GallonUS)  ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Volume" -> (pick(R.string.UnitConvCatVolume_Liter) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatVolume_GallonUS) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Area"         -> (pick(R.string.UnitConvCatArea_SquareMeter) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatArea_SquareFoot)  ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Area" -> (pick(R.string.UnitConvCatArea_SquareMeter) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatArea_SquareFoot) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Temperature"  -> (pick(R.string.UnitConvCatTemperature_Celsius)    ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatTemperature_Fahrenheit) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Temperature" -> (pick(R.string.UnitConvCatTemperature_Celsius)
+                ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatTemperature_Fahrenheit) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Time"         -> (pick(R.string.UnitConvCatTime_Millisecond) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatTime_Minute) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Time" -> (pick(R.string.UnitConvCatTime_Millisecond) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatTime_Minute) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Speed"        -> (pick(R.string.UnitConvCatSpeed_KilometerPerHour) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatSpeed_MilePerHour)      ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Speed" -> (pick(R.string.UnitConvCatSpeed_KilometerPerHour)
+                ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatSpeed_MilePerHour) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Energy"       -> (pick(R.string.UnitConvCatEnergy_Joule)        ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatEnergy_KilowattHour) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Energy" -> (pick(R.string.UnitConvCatEnergy_Joule) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatEnergy_KilowattHour) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Power"        -> (pick(R.string.UnitConvCatPower_Kilowatt)    ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatPower_Horsepower) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Power" -> (pick(R.string.UnitConvCatPower_Kilowatt) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatPower_Horsepower) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Pressure"     -> (pick(R.string.UnitConvCatPressure_Bar)  ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatPressure_PSI)  ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Pressure" -> (pick(R.string.UnitConvCatPressure_Bar) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatPressure_PSI) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Frequency"    -> (pick(R.string.UnitConvCatFrequency_Hertz)    ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatFrequency_Kilohertz) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Frequency" -> (pick(R.string.UnitConvCatFrequency_Hertz) ?: availableUnits.first()) to
+                    (
+                            pick(R.string.UnitConvCatFrequency_Kilohertz)
+                                ?: availableUnits.getOrNull(1)
+                                ?: availableUnits.first()
+                            )
 
-            "Data"         -> (pick(R.string.UnitConvCatData_Megabyte) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatData_Mebibyte) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Data" -> (pick(R.string.UnitConvCatData_Megabyte) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatData_Mebibyte) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "FuelEconomy"  -> (pick(R.string.UnitConvCatFuelEconomy_LitersPer100km) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatFuelEconomy_MPG_US)         ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "FuelEconomy" -> (pick(R.string.UnitConvCatFuelEconomy_LitersPer100km)
+                ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatFuelEconomy_MPG_US) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "PlaneAngle"   -> (pick(R.string.UnitConvCatPlaneAngle_Degree) ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatPlaneAngle_Radian) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "PlaneAngle" -> (pick(R.string.UnitConvCatPlaneAngle_Degree)
+                ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatPlaneAngle_Radian) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            "Amount"       -> (pick(R.string.UnitConvCatAmount_Mole)      ?: availableUnits.first()) to
-                    (pick(R.string.UnitConvCatAmount_Millimole) ?: availableUnits.getOrNull(1) ?: availableUnits.first())
+            "Amount" -> (pick(R.string.UnitConvCatAmount_Mole) ?: availableUnits.first()) to
+                    (pick(R.string.UnitConvCatAmount_Millimole) ?: availableUnits.getOrNull(1)
+                    ?: availableUnits.first())
 
-            else           -> availableUnits.getOrNull(0) to availableUnits.getOrNull(1)
+            else -> availableUnits.getOrNull(0) to availableUnits.getOrNull(1)
         }.let { (a, b) ->
             // final fallback if any is null
-            val first  = a ?: availableUnits.first()
+            val first = a ?: availableUnits.first()
             val second = b ?: availableUnits.getOrNull(1) ?: first
             first to second
         }
@@ -179,13 +196,13 @@ class UnitConverterViewModel @Inject constructor(
             uiState.copy(fromUnit = from, toUnit = to, fromValue = newFromVal)
         }
     }
-    
+
     /** Prefer most-recent history pair; otherwise defaults. */
     private fun applyUnitsFromHistoryOrDefaults(history: List<UnitHistoryEntity>) {
         val mostRecent = history.firstOrNull()
         if (mostRecent != null) {
             val fromU = findUnitByLabel(mostRecent.fromUnit)
-            val toU   = findUnitByLabel(mostRecent.toUnit)
+            val toU = findUnitByLabel(mostRecent.toUnit)
             if (fromU != null && toU != null) {
                 applyUnits(fromU, toU)
                 return
@@ -202,13 +219,15 @@ class UnitConverterViewModel @Inject constructor(
     /** 3. Einheitlicher Handler für Werteingaben */
     fun onValueChange(input: String) {
         uiState = if (uiState.selectedField == 1) {
-            val newFrom = input
-            val newTo = convert(newFrom, uiState.fromUnit, uiState.toUnit)
-            uiState.copy(fromValue = newFrom, toValue = newTo)
+            uiState.copy(
+                fromValue = input,
+                toValue = convert(input, uiState.fromUnit, uiState.toUnit)
+            )
         } else {
-            val newTo = input
-            val newFrom = convert(newTo, uiState.toUnit, uiState.fromUnit)
-            uiState.copy(fromValue = newFrom, toValue = newTo)
+            uiState.copy(
+                fromValue = convert(input, uiState.toUnit, uiState.fromUnit),
+                toValue = input
+            )
         }
     }
 
@@ -252,12 +271,15 @@ class UnitConverterViewModel @Inject constructor(
                         v.subtract(BigDecimal("32"), mc)
                             .multiply(BigDecimal("5"), mc)
                             .divide(BigDecimal("9"), mc)
+
                     R.string.UnitConvCatTemperature_Kelvin ->
                         v.subtract(BigDecimal("273.15"), mc)
+
                     R.string.UnitConvCatTemperature_Rankine ->
                         v.subtract(BigDecimal("491.67"), mc)
                             .multiply(BigDecimal("5"), mc)
                             .divide(BigDecimal("9"), mc)
+
                     else -> v
                 }
                 // dann in Ziel umrechnen
@@ -266,25 +288,27 @@ class UnitConverterViewModel @Inject constructor(
                         c.multiply(BigDecimal("9"), mc)
                             .divide(BigDecimal("5"), mc)
                             .add(BigDecimal("32"), mc)
+
                     R.string.UnitConvCatTemperature_Kelvin ->
                         c.add(BigDecimal("273.15"), mc)
+
                     R.string.UnitConvCatTemperature_Rankine ->
                         c.add(BigDecimal("273.15"), mc)
                             .multiply(BigDecimal("9"), mc)
                             .divide(BigDecimal("5"), mc)
+
                     else -> c
                 }
             }
+
             "Speed" -> {
                 val mc = MathContext(18, RoundingMode.HALF_UP)
-                val THOUSAND = BigDecimal("1000")
-                val ZERO = BigDecimal.ZERO
+                val thousand = BigDecimal("1000")
+                val zero = BigDecimal.ZERO
 
                 fun parsePaceSeconds(text: String): BigDecimal? {
                     val t = text.trim()
                     if (t.isEmpty()) return null
-
-
                     val parts = when {
                         t.contains(".") -> t.split(".", limit = 2)
                         else -> listOf(t, "0")
@@ -294,7 +318,8 @@ class UnitConverterViewModel @Inject constructor(
                     val min = parts[0].toLongOrNull() ?: return null
                     val sec = (parts[1].ifEmpty { "0" }).toLongOrNull() ?: return null
 
-                    val total = min * 60L + sec // Sekunden dürfen >=60 sein -> ergibt automatisch carry über total
+                    // Seconds may exceed 59, so carrying happens naturally via the total.
+                    val total = min * 60L + sec
                     return BigDecimal(total.toString())
                 }
 
@@ -309,10 +334,11 @@ class UnitConverterViewModel @Inject constructor(
                 val baseMs: BigDecimal = when (a.nameRes) {
                     R.string.UnitConvCatSpeed_MinutePerKilometer -> {
                         val paceSec = parsePaceSeconds(input) ?: return ""
-                        if (paceSec <= ZERO) return ""
+                        if (paceSec <= zero) return ""
                         // m/s = 1000 / (secPerKm)
-                        THOUSAND.divide(paceSec, mc)
+                        thousand.divide(paceSec, mc)
                     }
+
                     else -> {
                         val v = input.toBigDecimalOrNull() ?: return ""
                         v.multiply(a.factorToBase, mc)
@@ -322,12 +348,13 @@ class UnitConverterViewModel @Inject constructor(
                 // 2) m/s -> Ziel b
                 return when (b.nameRes) {
                     R.string.UnitConvCatSpeed_MinutePerKilometer -> {
-                        if (baseMs <= ZERO) ""
+                        if (baseMs <= zero) ""
                         else {
-                            val secPerKm = THOUSAND.divide(baseMs, mc)
+                            val secPerKm = thousand.divide(baseMs, mc)
                             formatPace(secPerKm)
                         }
                     }
+
                     else -> {
                         baseMs.divide(b.factorToBase, mc)
                             .stripTrailingZeros()
@@ -335,6 +362,7 @@ class UnitConverterViewModel @Inject constructor(
                     }
                 }
             }
+
             "FuelEconomy" -> {
                 val mpgUS = BigDecimal("235.214583")
                 val mpgUK = BigDecimal("282.481053")
@@ -344,21 +372,27 @@ class UnitConverterViewModel @Inject constructor(
                         R.string.UnitConvCatFuelEconomy_MPG_UK -> mpgUK.divide(v, mc)
                         else -> v
                     }
+
                     R.string.UnitConvCatFuelEconomy_MPG_US -> when (b.nameRes) {
                         R.string.UnitConvCatFuelEconomy_LitersPer100km -> mpgUS.divide(v, mc)
                         R.string.UnitConvCatFuelEconomy_MPG_UK ->
                             mpgUK.divide(mpgUS.divide(v, mc), mc)
+
                         else -> v
                     }
+
                     R.string.UnitConvCatFuelEconomy_MPG_UK -> when (b.nameRes) {
                         R.string.UnitConvCatFuelEconomy_LitersPer100km -> mpgUK.divide(v, mc)
                         R.string.UnitConvCatFuelEconomy_MPG_US ->
                             mpgUS.divide(mpgUK.divide(v, mc), mc)
+
                         else -> v
                     }
+
                     else -> v
                 }
             }
+
             else -> {
                 val factorA = a.factorToBase
                 val factorB = b.factorToBase
@@ -371,5 +405,9 @@ class UnitConverterViewModel @Inject constructor(
 
     /** Extension zum sicheren Parsen */
     private fun String.toBigDecimalOrNull(): BigDecimal? =
-        try { BigDecimal(this) } catch (_: Exception) { null }
+        try {
+            BigDecimal(this)
+        } catch (_: Exception) {
+            null
+        }
 }
